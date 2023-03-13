@@ -1,9 +1,11 @@
 import bcrypt from "bcrypt";
 import validator from "validator";
-import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+
 export const signUp = async (req, res) => {
-  const { email, password, confirmPassword } = req.body;
+  const { email, password, confirmPassword, name, phone, gender } = req.body;
   if (!validator.isEmail(email)) {
     return res.status(400).json({ message: "Email not valid" });
   }
@@ -16,13 +18,16 @@ export const signUp = async (req, res) => {
     return res.status(400).json({ message: "Password and confirm not match" });
   const salt = await bcrypt.genSalt();
   const hashPassword = await bcrypt.hash(password, salt);
+  const data = { email, password, name, phone, gender, password: hashPassword };
   try {
-    const user = await User.create({
-      ...req.body,
-      password: hashPassword,
+    const user = await prisma.user.create({
+      data: {
+        ...data,
+      },
     });
     res.status(200).json({ message: "User Sign Up", id: user.uuid });
   } catch (error) {
+    console.log(error);
     return res.status(500).json(error);
   }
 };
@@ -32,7 +37,7 @@ export const signIn = async (req, res) => {
     return res.status(400).json({ message: "Email not valid" });
   }
   try {
-    const user = await User.findOne({
+    const user = await prisma.user.findUnique({
       where: { email: email },
     });
     if (!user) {
@@ -58,10 +63,10 @@ export const signIn = async (req, res) => {
         expiresIn: "2d",
       }
     );
-    await User.update(
-      { refresh_token: refreshToken },
-      { where: { uuid: user.uuid } }
-    );
+    await prisma.user.update({
+      data: { refresh_token: refreshToken },
+      where: { uuid: user.uuid },
+    });
 
     res
       .cookie("access_token", accessToken, {
@@ -86,15 +91,15 @@ export const signOut = async (req, res) => {
         if (err) {
           return res.status(403).json({ message: "Invalid refresh token" });
         }
-        const user = await User.findOne({
+        const user = await prisma.user.findUnique({
           where: { uuid: decodedAccess.id },
         });
-        await User.update(
-          {
+        await prisma.user.update({
+          data: {
             refresh_token: null,
           },
-          { where: { uuid: user.uuid } }
-        );
+          where: { uuid: user.uuid },
+        });
         res
           .cookie("access_token", "", { expires: new Date(0) })
           .status(200)
@@ -112,7 +117,7 @@ export const getFirst = async (req, res) => {
     return res.status(401).json({ message: "Plese login to your account" });
   }
   try {
-    const user = await User.findOne({
+    const user = await prisma.user.findUnique({
       where: { uuid: req.params.id },
     });
     if (!user) {
@@ -134,10 +139,10 @@ export const getFirst = async (req, res) => {
         expiresIn: "2d",
       }
     );
-    await User.update(
-      { refresh_token: refreshToken },
-      { where: { uuid: user.uuid } }
-    );
+    await prisma.user.update({
+      data: { refresh_token: refreshToken },
+      where: { uuid: user.uuid },
+    });
 
     res
       .cookie("access_token", accessToken, {
@@ -162,17 +167,8 @@ export const getMe = async (req, res) => {
         if (err) {
           return res.status(403).json({ message: "Invalid refresh token" });
         }
-        const user = await User.findOne({
+        const user = await prisma.user.findUnique({
           where: { uuid: decodedAccess.id },
-          attributes: [
-            "uuid",
-            "name",
-            "email",
-            "phone",
-            "img",
-            "role",
-            "gender",
-          ],
         });
         res.status(200).json(user);
       }

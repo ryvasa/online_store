@@ -36,17 +36,17 @@ export const addProduct = async (req, res) => {
   }
 };
 
-// get all product
+// // get all product
 export const getAllProduct = async (req, res) => {
   const page = parseInt(req.query.page) || 0;
   const limit = parseInt(req.query.limit) || 10;
-  const size = req.query.size || "";
-  const color = req.query.color || "";
+  const size = req.query.size;
+  const color = req.query.color;
   const category = req.query.category;
   const search = req.query.search || "";
   const offset = limit * page;
   try {
-    const totalRows = await prisma.product.count({
+    const totalRows = await prisma.product.findMany({
       where: {
         AND: [
           {
@@ -59,11 +59,27 @@ export const getAllProduct = async (req, res) => {
               array_contains: category,
             },
           },
+          {
+            stock: {
+              some: {
+                color: color,
+                size: size,
+              },
+            },
+          },
         ],
+      },
+      include: {
+        stock: {
+          where: {
+            color: color,
+            size: size,
+          },
+        },
       },
     });
 
-    const totalPage = Math.ceil(totalRows / limit);
+    const totalPage = Math.ceil(totalRows.length / limit);
     const result = await prisma.product.findMany({
       where: {
         AND: [
@@ -77,7 +93,23 @@ export const getAllProduct = async (req, res) => {
               array_contains: category,
             },
           },
+          {
+            stock: {
+              some: {
+                color: color,
+                size: size,
+              },
+            },
+          },
         ],
+      },
+      include: {
+        stock: {
+          where: {
+            color: color,
+            size: size,
+          },
+        },
       },
       skip: offset,
       take: limit,
@@ -85,8 +117,8 @@ export const getAllProduct = async (req, res) => {
         id: "desc",
       },
     });
-
-    res.json({ result, page, limit, totalRows, totalPage });
+    const rows = totalRows.length;
+    res.json({ result, page, limit, rows, totalPage });
   } catch (error) {
     console.log(error);
     res.status(200).json(error);

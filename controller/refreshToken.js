@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
-
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 export const refreshToken = async (req, res) => {
   try {
-    const user = await User.findOne({
+    const user = await prisma.user.findUnique({
       where: { uuid: req.params.id },
     });
     jwt.verify(

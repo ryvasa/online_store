@@ -20,12 +20,13 @@ model User {
   img           String?
   role          String?   @default("user")
   gender        String
-  refresh_token String?
+  refresh_token String? @db.Text
+  cart      Cart[]
 }
 
 model Product {
   id         Int     @id @default(autoincrement())
-  uuid       String  @default(uuid())
+  uuid       String  @unique @default(uuid())
   name       String
   img        Json
   categories Json
@@ -33,14 +34,25 @@ model Product {
   desc       String
   price      Int
   rating     Int?
-  stock       Stock[]
+  stock      Stock[]
+  cart Cart[]
+}
+model Cart {
+  id         Int     @id @default(autoincrement())
+  uuid       String  @unique @default(uuid())
+  user_id    String  
+  product_id   String
+  quantity   Int
+  price      Int
+  product      Product @relation(fields: [product_id], references: [uuid])
+  user       User @relation(fields: [user_id], references: [uuid])
 }
 model Stock {
   id         Int     @id @default(autoincrement())
-  uuid       String  @default(uuid())
-  product_id Int
+  uuid       String  @unique @default(uuid())
+  product_id String
   size       String
   color      String
   stock      Int
-  product    Product @relation(fields: [product_id], references: [id])
+  product    Product @relation(fields: [product_id], references: [uuid])
 }

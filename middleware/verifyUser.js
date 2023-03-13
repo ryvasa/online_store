@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 export const verifyToken = async (req, res, next) => {
   try {
     jwt.verify(
@@ -9,7 +10,7 @@ export const verifyToken = async (req, res, next) => {
         if (err) {
           return res.status(403).json({ message: "Invalid refresh token" });
         }
-        const user = await User.findOne({
+        const user = await prisma.user.findUnique({
           where: { uuid: decodedAccess.id },
         });
         jwt.verify(
@@ -45,7 +46,7 @@ export const onlyAdmin = async (req, res, next) => {
         if (err) {
           return res.status(403).json({ message: "Invalid refresh token" });
         }
-        const user = await User.findOne({
+        const user = await prisma.user.findUnique({
           where: { uuid: decodedAccess.id },
         });
         jwt.verify(

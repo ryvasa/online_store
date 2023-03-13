@@ -46,3 +46,60 @@ const sizes = Object.values(
 
 console.log(colors); // Output: ["red", "blue", "green"]
 console.log(sizes); // Output: ["XXL", "XL", "L", "M", "S", "XS", "XXS"]
+
+// get all product
+export const getAllProduct = async (req, res) => {
+  const page = parseInt(req.query.page) || 0;
+  const limit = parseInt(req.query.limit) || 10;
+  const size = req.query.size || "";
+  const color = req.query.color || "";
+  const category = req.query.category;
+  const search = req.query.search || "";
+  const offset = limit * page;
+  try {
+    const totalRows = await prisma.product.findMany({
+      where: {
+        stock: {
+          some: {
+            color: color,
+          },
+        },
+      },
+      include: {
+        stock: {
+          where: {
+            color: color,
+          },
+        },
+      },
+    });
+
+    const totalPage = Math.ceil(totalRows.length / limit);
+    const result = await prisma.product.findMany({
+      where: {
+        stock: {
+          some: {
+            color: color,
+          },
+        },
+      },
+      include: {
+        stock: {
+          where: {
+            color: color,
+          },
+        },
+      },
+      skip: offset,
+      take: limit,
+      orderBy: {
+        id: "desc",
+      },
+    });
+    const rows = totalRows.length;
+    res.json({ result, page, limit, rows, totalPage });
+  } catch (error) {
+    console.log(error);
+    res.status(200).json(error);
+  }
+};
