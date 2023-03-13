@@ -6,6 +6,41 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  uuid          String   @unique @default(uuid())
+  name          String   @unique
+  email         String   @unique
+  password      String
+  phone         Int
+  img           String?
+  role          String?   @default("user")
+  gender        String
+  refresh_token String?
+}
+
+model Product {
+  id         Int     @id @default(autoincrement())
+  uuid       String  @default(uuid())
+  name       String
+  img        Json
+  categories Json
+  detail     String
+  desc       String
+  price      Int
+  rating     Int?
+  stock       Stock[]
+}
+model Stock {
+  id         Int     @id @default(autoincrement())
+  uuid       String  @default(uuid())
+  product_id Int
+  size       String
+  color      String
+  stock      Int
+  product    Product @relation(fields: [product_id], references: [id])
 }

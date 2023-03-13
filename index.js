@@ -9,12 +9,12 @@ import userRoute from "./routes/userRoute.js";
 import productRoute from "./routes/productRoute.js";
 
 dotenv.config();
-try {
-  await db.authenticate();
-  console.log("Database conected...");
-} catch (error) {
-  console.log(error);
-}
+// try {
+//   await db.authenticate();
+//   console.log("Database conected...");
+// } catch (error) {
+//   console.log(error);
+// }
 // (async () => {
 //   await db.sync();
 // })();

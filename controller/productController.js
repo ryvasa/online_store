@@ -1,14 +1,37 @@
-import { Op } from "sequelize";
-import Product from "../models/Product.js";
+import { PrismaClient } from "@prisma/client";
 
+const prisma = new PrismaClient();
 // add Product
 export const addProduct = async (req, res) => {
   try {
-    const product = await Product.create({
-      ...req.body,
+    const { name, img, rating, categories, detail, desc, price, stock } =
+      req.body;
+
+    const product = await prisma.product.create({
+      data: {
+        name,
+        img,
+        rating,
+        categories,
+        detail,
+        desc,
+        price,
+        stock: {
+          create: stock.map((s) => ({
+            size: s.size,
+            color: s.color,
+            stock: s.stock,
+          })),
+        },
+      },
+      include: {
+        stock: true,
+      },
     });
+
     res.status(200).json({ message: "Product Added", product: product });
   } catch (error) {
+    console.log(error);
     return res.status(500).json(error);
   }
 };
@@ -17,55 +40,63 @@ export const addProduct = async (req, res) => {
 export const getAllProduct = async (req, res) => {
   const page = parseInt(req.query.page) || 0;
   const limit = parseInt(req.query.limit) || 10;
-  const search = req.query.search || "";
-  const cat = req.query.cat || "";
   const size = req.query.size || "";
   const color = req.query.color || "";
+  const category = req.query.category;
+  const search = req.query.search || "";
   const offset = limit * page;
   try {
-    const totalRows = await Product.count({
+    const totalRows = await prisma.product.count({
       where: {
-        [Op.or]: [
+        AND: [
           {
             name: {
-              [Op.like]: "%" + search + "%",
+              contains: search,
             },
           },
           {
-            categories: search,
+            categories: {
+              array_contains: category,
+            },
           },
         ],
       },
     });
+
     const totalPage = Math.ceil(totalRows / limit);
-    const result = await Product.findAll({
+    const result = await prisma.product.findMany({
       where: {
-        [Op.or]: [
+        AND: [
           {
             name: {
-              [Op.like]: "%" + search + "%",
+              contains: search,
             },
           },
           {
-            categories: search,
+            categories: {
+              array_contains: category,
+            },
           },
         ],
       },
-      offset: offset,
-      limit: limit,
-      order: [["id", "DESC"]],
+      skip: offset,
+      take: limit,
+      orderBy: {
+        id: "desc",
+      },
     });
-    res.status(200).json({ result, page, limit, totalRows, totalPage });
-    // res.status(200).json(result);
+
+    res.json({ result, page, limit, totalRows, totalPage });
   } catch (error) {
-    res.status(500).json(error);
+    console.log(error);
+    res.status(200).json(error);
   }
 };
 
 // get product by id
 export const getProductById = async (req, res) => {
   try {
-    const product = await Product.findOne({
+    const product = await prisma.product.findUnique({
       where: {
         uuid: req.params.id,
       },
@@ -81,7 +112,7 @@ export const getProductById = async (req, res) => {
 
 // update product
 export const updateProduct = async (req, res) => {
-  const product = await Product.findOne({
+  const product = await prisma.product.findUnique({
     where: {
       uuid: req.params.id,
     },
@@ -90,12 +121,12 @@ export const updateProduct = async (req, res) => {
     return res.status(404).json({ message: "Product not found" });
   }
   try {
-    const updatedProduct = await Product.update(
-      {
+    const updatedProduct = await prisma.product.update({
+      data: {
         ...req.body,
       },
-      { where: { uuid: product.uuid } }
-    );
+      where: { uuid: product.uuid },
+    });
 
     res
       .status(200)
@@ -106,17 +137,16 @@ export const updateProduct = async (req, res) => {
 };
 // delete product
 export const deleteProduct = async (req, res) => {
-  const product = await Product.findOne({
-    where: {
-      uuid: req.params.id,
-    },
-  });
-
-  if (!product) return res.status(404).json({ message: "Product not found" });
   try {
-    await Product.destroy({
+    const product = await prisma.product.findUnique({
       where: {
-        uuid: product.uuid,
+        uuid: req.params.id,
+      },
+    });
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    await prisma.product.delete({
+      where: {
+        uuid: req.params.id,
       },
     });
     res.status(200).json({ message: "Product has been deleted" });
