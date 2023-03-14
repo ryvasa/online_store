@@ -21,7 +21,10 @@ model User {
   role          String?   @default("user")
   gender        String
   refresh_token String? @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   cart      Cart[]
+  order       Order[]
 }
 
 model Product {
@@ -34,18 +37,27 @@ model Product {
   desc       String
   price      Int
   rating     Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   stock      Stock[]
   cart Cart[]
+  order       Order[]
 }
 model Cart {
   id         Int     @id @default(autoincrement())
   uuid       String  @unique @default(uuid())
   user_id    String  
   product_id   String
+  stock_id   String
   quantity   Int
   price      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   product      Product @relation(fields: [product_id], references: [uuid])
+  stock      Stock @relation(fields: [stock_id], references: [uuid])
   user       User @relation(fields: [user_id], references: [uuid])
+  order       Order[]
+
 }
 model Stock {
   id         Int     @id @default(autoincrement())
@@ -54,5 +66,48 @@ model Stock {
   size       String
   color      String
   stock      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   product    Product @relation(fields: [product_id], references: [uuid])
+  cart        Cart[]
+  order       Order[]
+}
+model Order {
+  id         Int     @id @default(autoincrement())
+  uuid       String  @unique @default(uuid())
+  user_id    String
+  product_id String
+  stock_id   String
+  cart_id     String
+  totalPrice Int
+  totalQuantity Int
+  name       String @db.Text
+  country    String @db.Text
+  city       String @db.Text
+  address    String @db.Text
+  postal_code    Int
+  status          String?   @default("proccess")
+  product      Product @relation(fields: [product_id], references: [uuid])
+  stock      Stock @relation(fields: [stock_id], references: [uuid])
+  user       User @relation(fields: [user_id], references: [uuid])
+  cart       Cart @relation(fields: [cart_id], references: [uuid])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Slide {
+  id         Int     @id @default(autoincrement())
+  uuid       String  @unique @default(uuid())
+  img         String
+  title       String
+  detail      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Category_preview {
+  id         Int     @id @default(autoincrement())
+  uuid       String  @unique @default(uuid())
+  img         String
+  title       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

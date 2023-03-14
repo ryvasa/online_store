@@ -7,6 +7,8 @@ import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 import productRoute from "./routes/productRoute.js";
 import cartRoute from "./routes/cartRoute.js";
+import slideRoute from "./routes/slideRoute.js";
+import categoryPreviewRoute from './routes/categoryPreviewRoute.js'
 
 dotenv.config();
 const app = express();
@@ -19,6 +21,8 @@ app.use(refreshTokenRoute);
 app.use(userRoute);
 app.use(productRoute);
 app.use(cartRoute);
+app.use(slideRoute);
+app.use(categoryPreviewRoute);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on ${process.env.PORT}`);

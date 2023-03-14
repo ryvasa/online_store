@@ -6,6 +6,9 @@ export const refreshToken = async (req, res) => {
     const user = await prisma.user.findUnique({
       where: { uuid: req.params.id },
     });
+    if (!user) {
+      return res.status(401).json({ message: "Plese login to your account" });
+    }
     jwt.verify(
       user.refresh_token,
       process.env.REFRESH,

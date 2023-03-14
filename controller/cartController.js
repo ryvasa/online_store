@@ -3,209 +3,209 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// add user
+// add product or update product on cart
 export const addCart = async (req, res) => {
   const { product_id, color, size, quantity } = req.body;
-  try {
-    const product = await prisma.product.findUnique({
-      where: { uuid: product_id },
-      include: {
-        stock: {
-          where: {
-            color: color,
-            size: size,
-          },
+  const product = await prisma.product.findUnique({
+    where: { uuid: product_id },
+    include: {
+      stock: {
+        where: {
+          color: color,
+          size: size,
         },
       },
-    });
-    if (product.stock.length === 0) {
-      res.status(400).json({ message: "Out of stock" });
-    }
-    res.status(200).json(product);
-  } catch (error) {
-    console.log(error);
+    },
+  });
+  if (
+    !product ||
+    product.stock.length === 0 ||
+    product.stock[0].stock <= 0 ||
+    quantity > product.stock[0].stock
+  ) {
+    return res.status(400).json({ message: "Out of stock" });
   }
-
-  //   jwt.verify(
-  //     req.cookies.access_token,
-  //     process.env.ACCESS,
-  //     async (err, decodedToken) => {
-  //       if (err) {
-  //         return res.status(403).json({ message: "Invalid access token" });
-  //       }
-  //       console.log(decodedToken);
-  //       try {
-  //         const cart = await prisma.cart.create({
-  //           data: {
-  //             user_id: decodedToken.id,
-  //             stock_id: stock_id,
-  //           },
-  //         });
-
-  //         res
-  //           .status(200)
-  //           .json({ message: "Product Added to cart", product: product });
-  //       } catch (error) {
-  //         console.log(error);
-  //         return res.status(500).json(error);
-  //       }
-  //     }
-  //   );
+  jwt.verify(
+    req.cookies.access_token,
+    process.env.ACCESS,
+    async (err, decodedToken) => {
+      if (err) {
+        return res.status(403).json({ message: "Invalid access token" });
+      }
+      try {
+        const cart = await prisma.cart.findFirst({
+          where: {
+            AND: [
+              {
+                user_id: decodedToken.id,
+              },
+              {
+                product_id: product.uuid,
+              },
+              {
+                stock_id: product.stock[0].uuid,
+              },
+            ],
+          },
+          include: {
+            product: true,
+            stock: true,
+          },
+        });
+        if (cart) {
+          if (cart.quantity + quantity > product.stock[0].stock) {
+            return res.status(400).json({ message: "Out of stock" });
+          }
+          try {
+            console.log({ cart: cart.quantity, quantity: quantity });
+            const updateCart = await prisma.cart.update({
+              data: {
+                quantity: cart.quantity + quantity,
+                price: product.price * (cart.quantity += quantity),
+              },
+              where: { uuid: cart.uuid },
+            });
+            res.status(200).json({
+              message: "Update product quantity on cart",
+              cart: updateCart,
+            });
+          } catch (error) {
+            console.log(error);
+            res.status(500).json(error);
+          }
+        } else {
+          try {
+            const addCart = await prisma.cart.create({
+              data: {
+                user_id: decodedToken.id,
+                product_id: product_id,
+                stock_id: product.stock[0].uuid,
+                quantity: quantity,
+                price: product.price * quantity,
+              },
+            });
+            res
+              .status(200)
+              .json({ message: "Product Added to cart", cart: addCart });
+          } catch (error) {
+            console.log(error);
+            return res.status(500).json(error);
+          }
+        }
+      } catch (error) {
+        console.log(error);
+        res.status(500).json(error);
+      }
+    }
+  );
 };
 
-// // get all user
-// export const getAllUser = async (req, res) => {
-//   const page = parseInt(req.query.page) || 0;
-//   const limit = parseInt(req.query.limit) || 10;
-//   const search = req.query.search || "";
-//   const offset = limit * page;
-//   try {
-//     const totalRows = await prisma.user.count({
-//       where: {
-//         OR: [
-//           {
-//             name: {
-//               contains: search,
-//             },
-//           },
-//           {
-//             email: {
-//               contains: search,
-//             },
-//           },
-//         ],
-//       },
-//     });
+// get all product on cart by user id
+export const getAllProductOnCart = async (req, res) => {
+  jwt.verify(
+    req.cookies.access_token,
+    process.env.ACCESS,
+    async (err, decodedToken) => {
+      if (err) {
+        return res.status(403).json({ message: "Invalid access token" });
+      }
+      try {
+        const cart = await prisma.cart.findMany({
+          where: { user_id: decodedToken.id },
+          include: {
+            product: true,
+            stock: true,
+          },
+        });
+        res.status(200).json(cart);
+      } catch (error) {
+        console.log(error);
+        res.status(200).json(error);
+      }
+    }
+  );
+};
 
-//     const totalPage = Math.ceil(totalRows / limit);
-//     const result = await prisma.user.findMany({
-//       where: {
-//         OR: [
-//           {
-//             name: {
-//               contains: search,
-//             },
-//           },
-//           {
-//             email: {
-//               contains: search,
-//             },
-//           },
-//         ],
-//       },
-//       select: {
-//         uuid: true,
-//         name: true,
-//         email: true,
-//         phone: true,
-//         gender: true,
-//         img: true,
-//         role: true,
-//       },
-//       skip: offset,
-//       take: limit,
-//       orderBy: {
-//         id: "desc",
-//       },
-//     });
+// add or reduce quantity product on cart
+export const updateQuantity = async (req, res) => {
+  try {
+    const cart = await prisma.cart.findUnique({
+      where: { uuid: req.params.id },
+      include: {
+        product: true,
+        stock: true,
+      },
+    });
+    if (!cart) {
+      return res.status(404).json({ message: "Product not found on cart" });
+    }
+    let userId;
+    jwt.verify(
+      req.cookies.access_token,
+      process.env.ACCESS,
+      async (err, decodedToken) => {
+        if (err) {
+          return res.status(403).json({ message: "Invalid access token" });
+        }
+        userId = decodedToken.id;
+      }
+    );
+    if (userId === cart.user_id) {
+      if (req.body.operation === "add") {
+        if (cart.stock.stock < cart.quantity + 1) {
+          return res.status(400).json({ message: "Out of stock" });
+        } else {
+          const addCart = await prisma.cart.update({
+            data: {
+              quantity: { increment: 1 },
+              price: cart.product.price * (cart.quantity + 1),
+            },
+            where: { uuid: req.params.id },
+          });
+          res.status(200).json({ message: "Cart updated", cart: addCart });
+        }
+      } else if (req.body.operation === "reduce") {
+        if (cart.quantity <= 1) {
+          try {
+            await prisma.cart.delete({
+              where: {
+                uuid: cart.uuid,
+              },
+            });
+            return res.status(200).json({ message: "Cart deleted" });
+          } catch (error) {
+            console.log(error);
+            res.status(500).json(error);
+          }
+        }
+        const reduceCart = await prisma.cart.update({
+          data: {
+            quantity: { decrement: 1 },
+            price: cart.product.price * (cart.quantity - 1),
+          },
+          where: { uuid: req.params.id },
+        });
+        res.status(200).json({ message: "Cart updated", cart: reduceCart });
+      }
+    } else {
+      return res.status(403).json({ message: "You are not allowed" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+};
 
-//     res.json({ result, page, limit, totalRows, totalPage });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(200).json(error);
-//   }
-// };
-
-// // get user by id
-// export const getUserById = async (req, res) => {
-//   try {
-//     const user = await prisma.user.findUnique({
-//       where: {
-//         uuid: req.params.id,
-//       },
-//       select: {
-//         id: true,
-//         uuid: true,
-//         name: true,
-//         email: true,
-//         phone: true,
-//         img: true,
-//         gender: true,
-//       },
-//     });
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-//     res.status(200).json({ user });
-//   } catch (error) {
-//     return res.status(500).json(error);
-//   }
-// };
-
-// // update user
-// export const updateUser = async (req, res) => {
-//   const user = await prisma.user.findUnique({
-//     where: {
-//       uuid: req.params.id,
-//     },
-//   });
-//   if (!user) {
-//     return res.status(404).json({ message: "User not found" });
-//   }
-//   const { name, email, password, confirmPassword, role, img, phone, gender } =
-//     req.body;
-//   let hashPassword;
-//   if (!password || password === "" || password === null) {
-//     hashPassword = user.password;
-//   } else {
-//     {
-//       if (password !== confirmPassword)
-//         return res
-//           .status(400)
-//           .json({ message: "Password and confirm not match" });
-//       else if (password && confirmPassword) {
-//         const salt = await bcrypt.genSalt();
-//         hashPassword = await bcrypt.hash(password, salt);
-//       }
-//     }
-//   }
-//   try {
-//     const updatedUser = await prisma.user.update({
-//       where: { uuid: user.uuid },
-//       data: {
-//         email: email,
-//         name: name,
-//         password: hashPassword,
-//         phone: phone,
-//         gender: gender,
-//         img: img,
-//         role: role,
-//       },
-//     });
-
-//     res
-//       .status(200)
-//       .json({ message: "User has been updated", user: updatedUser });
-//   } catch (error) {
-//     return res.status(500).json(error);
-//   }
-// };
-// // delete user
-// export const deleteUser = async (req, res) => {
-//   try {
-//     const user = await prisma.user.findUnique({
-//       where: {
-//         uuid: req.params.id,
-//       },
-//     });
-//     if (!user) return res.status(404).json({ message: "User not found" });
-//     await prisma.user.delete({
-//       where: {
-//         uuid: req.params.id,
-//       },
-//     });
-//     res.status(200).json({ message: "User has been deleted" });
-//   } catch (error) {
-//     return res.status(500).json(error);
-//   }
-// };
+// delete product on cart
+export const deleteProductOnCart = async (req, res) => {
+  try {
+    await prisma.cart.delete({
+      where: {
+        uuid: req.params.id,
+      },
+    });
+    res.status(200).json({ message: "Product on cart has been deleted" });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
