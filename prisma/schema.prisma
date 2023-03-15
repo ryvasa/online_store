@@ -41,7 +41,6 @@ model Product {
   updatedAt DateTime @updatedAt
   stock      Stock[]
   cart Cart[]
-  order       Order[]
 }
 model Cart {
   id         Int     @id @default(autoincrement())
@@ -49,6 +48,7 @@ model Cart {
   user_id    String  
   product_id   String
   stock_id   String
+  order_id   String?
   quantity   Int
   price      Int
   createdAt DateTime @default(now())
@@ -56,8 +56,7 @@ model Cart {
   product      Product @relation(fields: [product_id], references: [uuid])
   stock      Stock @relation(fields: [stock_id], references: [uuid])
   user       User @relation(fields: [user_id], references: [uuid])
-  order       Order[]
-
+  order       Order? @relation(fields: [order_id], references: [uuid])
 }
 model Stock {
   id         Int     @id @default(autoincrement())
@@ -70,15 +69,11 @@ model Stock {
   updatedAt DateTime @updatedAt
   product    Product @relation(fields: [product_id], references: [uuid])
   cart        Cart[]
-  order       Order[]
 }
 model Order {
   id         Int     @id @default(autoincrement())
   uuid       String  @unique @default(uuid())
   user_id    String
-  product_id String
-  stock_id   String
-  cart_id     String
   totalPrice Int
   totalQuantity Int
   name       String @db.Text
@@ -86,13 +81,11 @@ model Order {
   city       String @db.Text
   address    String @db.Text
   postal_code    Int
-  status          String?   @default("proccess")
-  product      Product @relation(fields: [product_id], references: [uuid])
-  stock      Stock @relation(fields: [stock_id], references: [uuid])
+  status       String?   @default("proccess")
   user       User @relation(fields: [user_id], references: [uuid])
-  cart       Cart @relation(fields: [cart_id], references: [uuid])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  cart    Cart[]
 }
 model Slide {
   id         Int     @id @default(autoincrement())

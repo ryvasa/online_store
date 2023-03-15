@@ -1,6 +1,18 @@
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 
+//
+//
+//
+//
+//        CATATAN CBA MASUKAN TRANSACTION KE DALAM ARRAY prisma.$transaction([])
+//
+//
+//
+//
+//
+//
+
 const prisma = new PrismaClient();
 
 // add product or update product on cart
@@ -32,6 +44,7 @@ export const addCart = async (req, res) => {
       if (err) {
         return res.status(403).json({ message: "Invalid access token" });
       }
+
       try {
         const cart = await prisma.cart.findFirst({
           where: {
@@ -53,21 +66,25 @@ export const addCart = async (req, res) => {
           },
         });
         if (cart) {
-          if (cart.quantity + quantity > product.stock[0].stock) {
+          if (product.stock[0].stock === 0) {
             return res.status(400).json({ message: "Out of stock" });
           }
           try {
-            console.log({ cart: cart.quantity, quantity: quantity });
-            const updateCart = await prisma.cart.update({
+            const updateStock = prisma.stock.update({
+              data: { stock: cart.stock.stock - quantity },
+              where: { uuid: cart.stock_id },
+            });
+            const updateCart = prisma.cart.update({
               data: {
                 quantity: cart.quantity + quantity,
                 price: product.price * (cart.quantity += quantity),
               },
               where: { uuid: cart.uuid },
             });
+            await prisma.$transaction([updateStock, updateCart]);
             res.status(200).json({
               message: "Update product quantity on cart",
-              cart: updateCart,
+              cart: await updateCart,
             });
           } catch (error) {
             console.log(error);
@@ -75,7 +92,12 @@ export const addCart = async (req, res) => {
           }
         } else {
           try {
-            const addCart = await prisma.cart.create({
+            const updateStock = prisma.stock.update({
+              data: { stock: { decrement: quantity } },
+              where: { uuid: product.stock[0].uuid },
+            });
+
+            const addCart = prisma.cart.create({
               data: {
                 user_id: decodedToken.id,
                 product_id: product_id,
@@ -84,9 +106,19 @@ export const addCart = async (req, res) => {
                 price: product.price * quantity,
               },
             });
+            const findCart = prisma.cart.findFirst({
+              where: {
+                user_id: decodedToken.id,
+                product_id: product_id,
+                stock_id: product.stock[0].uuid,
+                quantity: quantity,
+                price: product.price * quantity,
+              },
+            });
+            await prisma.$transaction([updateStock, addCart, findCart]);
             res
               .status(200)
-              .json({ message: "Product Added to cart", cart: addCart });
+              .json({ message: "Product Added to cart", cart: await findCart });
           } catch (error) {
             console.log(error);
             return res.status(500).json(error);
@@ -152,40 +184,61 @@ export const updateQuantity = async (req, res) => {
     );
     if (userId === cart.user_id) {
       if (req.body.operation === "add") {
-        if (cart.stock.stock < cart.quantity + 1) {
+        if (cart.stock.stock === 0) {
           return res.status(400).json({ message: "Out of stock" });
         } else {
-          const addCart = await prisma.cart.update({
+          const addCart = prisma.cart.update({
             data: {
-              quantity: { increment: 1 },
+              quantity: cart.quantity + 1,
               price: cart.product.price * (cart.quantity + 1),
             },
             where: { uuid: req.params.id },
           });
-          res.status(200).json({ message: "Cart updated", cart: addCart });
+          const updateStock = prisma.stock.update({
+            data: { stock: cart.stock.stock - 1 },
+            where: { uuid: cart.stock_id },
+          });
+
+          await prisma.$transaction([addCart, updateStock]);
+          res
+            .status(200)
+            .json({ message: "Cart added +1", addCart: await addCart });
         }
       } else if (req.body.operation === "reduce") {
         if (cart.quantity <= 1) {
           try {
-            await prisma.cart.delete({
+            const deleteCart = prisma.cart.delete({
               where: {
                 uuid: cart.uuid,
               },
             });
+            const updateStock = prisma.stock.update({
+              data: { stock: cart.stock.stock + 1 },
+              where: { uuid: cart.stock_id },
+            });
+            await prisma.$transaction([deleteCart, updateStock]);
             return res.status(200).json({ message: "Cart deleted" });
           } catch (error) {
             console.log(error);
             res.status(500).json(error);
           }
         }
-        const reduceCart = await prisma.cart.update({
+        const reduceCart = prisma.cart.update({
           data: {
-            quantity: { decrement: 1 },
+            quantity: cart.quantity - 1,
             price: cart.product.price * (cart.quantity - 1),
           },
           where: { uuid: req.params.id },
         });
-        res.status(200).json({ message: "Cart updated", cart: reduceCart });
+        const updateStock = prisma.stock.update({
+          data: { stock: cart.stock.stock + 1 },
+          where: { uuid: cart.stock_id },
+        });
+
+        await prisma.$transaction([reduceCart, updateStock]);
+        res
+          .status(200)
+          .json({ message: "Cart reduced -1", reduceCart: await reduceCart });
       }
     } else {
       return res.status(403).json({ message: "You are not allowed" });
@@ -199,11 +252,26 @@ export const updateQuantity = async (req, res) => {
 // delete product on cart
 export const deleteProductOnCart = async (req, res) => {
   try {
-    await prisma.cart.delete({
+    const cart = await prisma.cart.findUnique({
+      where: { uuid: req.params.id },
+      include: {
+        product: true,
+        stock: true,
+      },
+    });
+    if (!cart) {
+      return res.status(404).json({ message: "Product not found on cart" });
+    }
+    const deleteCart = prisma.cart.delete({
       where: {
         uuid: req.params.id,
       },
     });
+    const updateStock = prisma.stock.update({
+      data: { stock: cart.stock.stock + cart.quantity },
+      where: { uuid: cart.stock_id },
+    });
+    await prisma.$transaction([deleteCart, updateStock]);
     res.status(200).json({ message: "Product on cart has been deleted" });
   } catch (error) {
     return res.status(500).json(error);
