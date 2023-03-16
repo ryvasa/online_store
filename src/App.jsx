@@ -29,6 +29,8 @@ function App() {
         <Route path="/income/:id" element={<Transaction />} />
         <Route path="/statistics" element={<Statistics />} />
         <Route path="/chat" element={<Chat />} />
+        <Route path="/profile/:id" element={<User />} />
+        <Route path="/profile/:id/edit" element={<EditUser />} />
       </Routes>
     </BrowserRouter>
   );

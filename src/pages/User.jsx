@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { IoMaleFemale } from "react-icons/io5";
 import {
   MdCall,
@@ -14,6 +14,11 @@ import Footer from "../components/Footer";
 import Layout from "../components/Layout";
 
 const User = () => {
+  const urlPath = window.location.pathname;
+  const path = urlPath.substring(
+    urlPath.indexOf("/") + 1,
+    urlPath.indexOf("/", 1)
+  );
   return (
     <Layout>
       <div className="flex-[5] overflow-y-auto relative pt-3 w-full h-screen flex-col flex pb-16 bg-gradient-to-b from-white to-gray-200">
@@ -109,7 +114,7 @@ const User = () => {
             <div className="flex w-full px-10 pt-5 justify-between">
               <div className="flex-1 w-full flex  justify-start">
                 <Link
-                  to={"/users/:id/edit"}
+                  to={`/${path}/:id/edit`}
                   className="flex gap-3 w-3/4 items-center justify-center rounded-md border-none bg-green-500 p-3 text-base font-medium text-white shadow-xl hover:bg-green-600"
                 >
                   <MdMode />

@@ -19,11 +19,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
               <div className="border-b px-5 py-2 flex w-full justify-between">
@@ -35,11 +42,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
               <div className="border-b px-5 py-2 flex w-full justify-between">
@@ -51,11 +65,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
               <div className="border-b px-5 py-2 flex w-full justify-between">
@@ -67,11 +88,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
               <div className="border-b px-5 py-2 flex w-full justify-between">
@@ -83,11 +111,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
               <div className="border-b px-5 py-2 flex w-full justify-between">
@@ -99,11 +134,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
 
@@ -116,11 +158,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
               <div className="border-b px-5 py-2 flex w-full justify-between">
@@ -132,11 +181,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
               <div className="border-b px-5 py-2 flex w-full justify-between">
@@ -148,11 +204,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
               <div className="border-b px-5 py-2 flex w-full justify-between">
@@ -164,11 +227,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
               <div className="border-b px-5 py-2 flex w-full justify-between">
@@ -180,11 +250,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
               <div className="border-b px-5 py-2 flex w-full justify-between">
@@ -196,11 +273,18 @@ const Chat = () => {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">Username</span>
-                    <span className="text-sm font-light">last message</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      last message
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span>1 hour ago</span>
+                  <div className="flex justify-center items-center gap-1">
+                    <span className="font-semibold text-md text-indigo-600">
+                      1
+                    </span>{" "}
+                    hour ago
+                  </div>
                 </div>
               </div>
             </div>
@@ -321,14 +405,14 @@ const Chat = () => {
                 </div>
               </div>
 
-              <div className="p-6 flex border-t gap-5 justify-center items-center bg-gray-100">
+              <div className="p-6 flex border-t gap-5 justify-center items-center bg-indigo-600">
                 <input
                   type="text"
                   placeholder="Type here"
                   className="inline-none rounded-lg w-full border input-md"
                 />
 
-                <MdSend className="w-6 h-6 text-indigo-600" />
+                <MdSend className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>

@@ -36,20 +36,32 @@ const Users = () => {
             />
             <MdSearch className="text-indigo-600 w-6 h-6" />
           </div>
-          {path === "products" && (
+          {(path === "products" && (
             <Link
               to={"/products/add"}
               className="flex items-center justify-center"
             >
-              <button className="btn btn-sm bg-indigo-600 border-none  hover:bg-indigo-600 text-white">
+              <button className="btn btn-sm bg-green-500 border-none  hover:bg-green-500 text-white">
                 <>
                   <MdStoreMallDirectory className="w-6 h-6 pr-1" />
                   Add Product
                 </>
-                {/* <MdPersonAdd className="w-6 h-6 pr-1" /> */}
               </button>
             </Link>
-          )}
+          )) ||
+            (path == "users" && (
+              <Link
+                to={"/users/add"}
+                className="flex items-center justify-center"
+              >
+                <button className="btn btn-sm bg-green-500 border-none  hover:bg-green-500 text-white">
+                  <>
+                    <MdPersonAdd className="w-6 h-6 pr-1" />
+                    Add User
+                  </>
+                </button>
+              </Link>
+            ))}
         </div>
         <Table color={"indigo-600"} from={path} data={data} />
         <Pagination color={color} />

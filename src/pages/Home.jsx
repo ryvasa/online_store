@@ -47,7 +47,7 @@ const Home = () => {
           <div className="flex w-full justify-center pt-10">
             <div className="flex-1 flex flex-col justify-center">
               <div className="text-xl w-full text-center font-bold text-gray-700">
-                New Join Users
+                Last Transaction
               </div>
               <Table
                 color={"indigo-600"}

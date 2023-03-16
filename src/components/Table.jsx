@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  MdDeleteForever,
-  MdLocalShipping,
-  MdPerson,
-  MdRemoveRedEye,
-  MdStoreMallDirectory,
-} from "react-icons/md";
+import { MdPerson, MdRemoveRedEye, MdStoreMallDirectory } from "react-icons/md";
 import { Link } from "react-router-dom";
 import {
   incomeHead,
@@ -17,6 +11,7 @@ import {
   smallUsersHead,
   usersHead,
 } from "../utils/tableHead";
+import Alert from "./Alert";
 
 const Table = ({ color, from, data }) => {
   const [head, setHead] = useState(null);
@@ -109,13 +104,7 @@ const Table = ({ color, from, data }) => {
                         <MdRemoveRedEye className="mr-1" />
                         Detail
                       </Link>
-                      <Link
-                        to={`/${from}/${d.id}`}
-                        className="btn-xs normal-case text-white bg-red-600 hover:text-red-600 btn-ghost border-none btn"
-                      >
-                        <MdDeleteForever className="mr-1" />
-                        Delete
-                      </Link>
+                      <Alert from={from} />{" "}
                     </div>
                   </td>
                 </tr>
@@ -153,13 +142,7 @@ const Table = ({ color, from, data }) => {
                         <MdRemoveRedEye className="mr-1" />
                         Detail
                       </Link>
-                      <Link
-                        to={`/${from}/${d.id}`}
-                        className="btn-xs normal-case text-white bg-red-600 hover:text-red-600 btn-ghost border-none btn"
-                      >
-                        <MdDeleteForever className="mr-1" />
-                        Delete
-                      </Link>
+                      <Alert from={from} />{" "}
                     </div>
                   </td>
                 </tr>
@@ -197,13 +180,7 @@ const Table = ({ color, from, data }) => {
                         <MdRemoveRedEye className="mr-1" />
                         Detail
                       </Link>
-                      <Link
-                        to={`/${from}/${d.id}`}
-                        className=" btn-xs normal-case text-white bg-green-500 hover:text-green-500 btn-ghost border-none btn"
-                      >
-                        <MdLocalShipping className="mr-1" />
-                        Confirm
-                      </Link>
+                      <Alert from={from} />{" "}
                     </div>
                   </td>
                 </tr>

@@ -24,7 +24,7 @@ const Navbar = () => {
             className="mt-3 p-2 shadow menu menu-compact dropdown-content bg-base-100 rounded-box w-52"
           >
             <li>
-              <Link to={"/profile"}>
+              <Link to={"/profile/:id"}>
                 <MdPerson className="lg:h-6 lg:w-6 h-4 w-4 text-indigo-700" />
                 Profile
               </Link>
