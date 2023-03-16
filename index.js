@@ -8,7 +8,9 @@ import userRoute from "./routes/userRoute.js";
 import productRoute from "./routes/productRoute.js";
 import cartRoute from "./routes/cartRoute.js";
 import slideRoute from "./routes/slideRoute.js";
-import categoryPreviewRoute from './routes/categoryPreviewRoute.js'
+import orderRoute from "./routes/orderRoute.js";
+import categoryPreviewRoute from "./routes/categoryPreviewRoute.js";
+import transactionRoute from "./routes/transactionRoute.js";
 
 dotenv.config();
 const app = express();
@@ -22,6 +24,8 @@ app.use(userRoute);
 app.use(productRoute);
 app.use(cartRoute);
 app.use(slideRoute);
+app.use(orderRoute);
+app.use(transactionRoute);
 app.use(categoryPreviewRoute);
 
 app.listen(process.env.PORT, () => {

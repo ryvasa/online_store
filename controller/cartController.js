@@ -1,18 +1,5 @@
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
-
-//
-//
-//
-//
-//        CATATAN CBA MASUKAN TRANSACTION KE DALAM ARRAY prisma.$transaction([])
-//
-//
-//
-//
-//
-//
-
 const prisma = new PrismaClient();
 
 // add product or update product on cart
@@ -44,7 +31,6 @@ export const addCart = async (req, res) => {
       if (err) {
         return res.status(403).json({ message: "Invalid access token" });
       }
-
       try {
         const cart = await prisma.cart.findFirst({
           where: {
@@ -96,7 +82,6 @@ export const addCart = async (req, res) => {
               data: { stock: { decrement: quantity } },
               where: { uuid: product.stock[0].uuid },
             });
-
             const addCart = prisma.cart.create({
               data: {
                 user_id: decodedToken.id,
