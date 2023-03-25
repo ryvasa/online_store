@@ -1,17 +1,41 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { IoCall, IoMail, IoMaleFemale, IoPersonCircle } from "react-icons/io5";
 import { IoMdSettings } from "react-icons/io";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import { refreshToken } from "../utils/refreshToken";
 
 const Profile = () => {
+  const [user, setUser] = useState({});
+
+  const getUser = async () => {
+    try {
+      const data = JSON.parse(localStorage.getItem("user"));
+      const id = data.uuid;
+      const response = await axios.get(`http://localhost:5000/users/${id}`);
+      if (response) {
+        const response = await axios.get(`http://localhost:5000/me`);
+        localStorage.setItem("user", JSON.stringify(response.data));
+      }
+      setUser(response.data.user);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    refreshToken().then(() => {
+      getUser();
+    });
+  }, []);
   return (
     <>
       <Navbar />
       <div className="w-full bg-gradient-to-b from-white to-gray-100 h-screen pt-10 relative">
         <Link
-          to={"/profile/:id"}
+          to={`/profile/${user.uuid}`}
           className="absolute lg:top-20 lg:right-5 top-[70px] right-3 z-10"
         >
           <div className="tooltip tooltip-left" data-tip="edit profile">
@@ -34,9 +58,13 @@ const Profile = () => {
             <div className="lg:flex-1 "></div>
             <div className="flg:lex-[2] flex justify-center">
               <img
-                src="https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                src={
+                  user && user.img
+                    ? user.img
+                    : "https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                }
                 alt=""
-                className="rounded-full shadow-lg h-60 w-60 border-2"
+                className="rounded-full shadow-lg h-60 w-60 border-2 object-cover"
               />
             </div>
             <div className="lg:flex-[3] flex w-full h-full justify-center items-center py-10 gap-5">
@@ -64,16 +92,16 @@ const Profile = () => {
                 <div className="flex-1 p-1 lg:p-3">
                   <ul className="flex-col lg:gap-5 gap-2 flex">
                     <li className="lg:font-medium lg:text-md font-light text-sm">
-                      : Username
+                      : {user.name}
                     </li>
                     <li className="lg:font-medium lg:text-md font-light text-sm">
-                      : Email
+                      : {user.email}
                     </li>
                     <li className="lg:font-medium lg:text-md font-light text-sm">
-                      : Phone
+                      : {user.phone}
                     </li>
                     <li className="lg:font-medium lg:text-md font-light text-sm">
-                      : Gender
+                      : {user.gender}
                     </li>
                   </ul>
                 </div>{" "}

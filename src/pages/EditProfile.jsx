@@ -1,4 +1,5 @@
-import React from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import {
   IoCall,
   IoImage,
@@ -8,10 +9,48 @@ import {
   IoMaleFemale,
   IoPersonCircle,
 } from "react-icons/io5";
+import { useNavigate, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
+import { handleClickUpdate } from "../utils/imageUpload";
+import { refreshToken } from "../utils/refreshToken";
 
 const EditProfile = () => {
+  const [file, setFile] = useState(null);
+  const [inputs, setInputs] = useState({});
+  const [preview, setPreview] = useState("");
+  const [user, setUser] = useState({});
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const getUser = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/users/${id}`);
+      setUser(response.data.user);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleClick = () => {
+    handleClickUpdate(file, id, inputs, handleCallback);
+  };
+  const handleCallback = (response) => {
+    navigate("/profile");
+  };
+  useEffect(() => {
+    refreshToken().then(() => {
+      getUser();
+    });
+  }, []);
+  const loadImage = (e) => {
+    const image = e.target.files[0];
+    setFile(image);
+    setPreview(URL.createObjectURL(image));
+  };
+  const handleChange = (e) => {
+    setInputs((prev) => {
+      return { ...prev, [e.target.name]: e.target.value };
+    });
+  };
   return (
     <>
       <Navbar />
@@ -28,62 +67,69 @@ const EditProfile = () => {
           ></path>
         </svg>
         <div className="flex flex-col justify-center lg:w-3/5 w-full border-2 rounded-lg shadow-lg  relative bg-white">
-          <div className="px-5 flex justify-center w-full">
+          <div className="p-5 flex justify-center w-full">
             <img
-              src="https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+              src={
+                preview
+                  ? preview
+                  : user.img
+                  ? user.img
+                  : "https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+              }
               alt=""
               className="object-cover w-72 h-72 rounded-sm"
             />
           </div>
           <span className="text-lg font-semibold text-center py-2">
-            ID : nshwrtq654838o1r4hjqb
+            ID : {user.uuid}
           </span>
           <div className="flex justify-center py-3">
-            <button className="btn btn-sm bg-teal-600 hover:bg-teal-500 border-none text-white flex gap-1 items-center">
+            <input
+              type="file"
+              onChange={loadImage}
+              id="img"
+              style={{ display: "none" }}
+            />
+            <label
+              htmlFor="img"
+              className="btn btn-sm bg-teal-600 hover:bg-teal-500 border-none text-white flex gap-1 items-center"
+            >
+              {" "}
               <IoImage className="w-4 h-4" />
-              <span>Add picture</span>
-            </button>
+              <span>Change Picture</span>
+            </label>
           </div>
           <div className="flex w-full justify-center py-3">
             <div className="flex lg:w-3/5 w-full px-2 justify-center">
               <div className="flex-1">
                 <ul className="flex-col lg:gap-5 gap-2 flex">
                   <li className="pr-1 lg:font-medium lg:text-md flex gap-1 items-center justify-end lg:justify-start font-light text-sm ">
-                    <span className="lg:hidden">Username</span>
                     <IoPersonCircle className="text-teal-600 w-4 h-4 lg:w-5 lg:h-5" />
-                    <span className="lg:block hidden">Username</span>
+                    <span className="">Username</span>
                   </li>
                   <li className="pr-1 lg:font-medium lg:text-md flex gap-1 items-center justify-end lg:justify-start font-light text-sm">
-                    <span className="lg:hidden">Email</span>
                     <IoMail className="text-teal-600 lg:w-5 lg:h-5 h-4 w-4" />
-                    <span className="lg:block hidden">Email</span>
+                    <span className="">Email</span>
                   </li>
                   <li className="pr-1 lg:font-medium lg:text-md flex gap-1 items-center justify-end lg:justify-start font-light text-sm">
-                    <span className="lg:hidden">Phone</span>
                     <IoCall className="text-teal-600 lg:w-5 lg:h-5 h-4 w-4" />
-                    <span className="lg:block hidden">Phone</span>
+                    <span className="">Phone</span>
                   </li>
                   <li className="pr-1 lg:font-medium lg:text-md flex gap-1 items-center justify-end lg:justify-start font-light text-sm">
-                    <span className="lg:hidden">Gender</span>
                     <IoMaleFemale className="text-teal-600 w-4 h-4 lg:w-5 lg:h-5" />
-                    <span className="lg:block hidden">Gender</span>
+                    <span className="">Gender</span>
                   </li>
                   <li className="pr-1 lg:font-medium lg:text-md flex gap-1 items-center justify-end lg:justify-start font-light text-sm">
-                    <span className="lg:hidden">Current Password</span>
                     <IoKey className="text-teal-600 w-4 h-4 lg:w-5 lg:h-5" />
-                    <span className="lg:block hidden">Current Password</span>
+                    <span className="">Current Password</span>
                   </li>
                   <li className="pr-1 lg:font-medium lg:text-md flex gap-1 items-center justify-end lg:justify-start font-light text-sm">
-                    <span className="lg:hidden">New Password</span>
                     <IoKeyOutline className="text-teal-600 w-4 h-4 lg:w-5 lg:h-5" />
-                    <span className="lg:block hidden">New Password</span>
+                    <span className="">New Password</span>
                   </li>
                   <li className="pr-1 lg:font-medium lg:text-md flex gap-1 items-center justify-end lg:justify-start font-light text-sm">
-                    <span className="lg:hidden">Confirm New Password</span>
                     <IoKeyOutline className="text-teal-600 w-4 h-4 lg:w-5 lg:h-5" />
-                    <span className="lg:block hidden">
-                      Confirm New Password
-                    </span>
+                    <span className="">Confirm New Password</span>
                   </li>
                 </ul>
               </div>
@@ -93,7 +139,7 @@ const EditProfile = () => {
                     :{" "}
                     <input
                       type="text"
-                      placeholder="Username"
+                      placeholder={user.name}
                       className="bg-transparent outline-none"
                     />
                   </li>
@@ -101,7 +147,7 @@ const EditProfile = () => {
                     :{" "}
                     <input
                       type="email"
-                      placeholder="Email"
+                      placeholder={user.email}
                       className="bg-transparent outline-none"
                     />
                   </li>
@@ -109,17 +155,26 @@ const EditProfile = () => {
                     :{" "}
                     <input
                       type="number"
-                      placeholder="Phone"
+                      placeholder={user.phone}
                       className="bg-transparent outline-none"
                     />
                   </li>
                   <li className="lg:font-medium lg:text-md font-light text-sm">
                     :{" "}
-                    <input
-                      type="text"
-                      placeholder="Gender"
+                    <select
+                      onChange={handleChange}
+                      name="gender"
                       className="bg-transparent outline-none"
-                    />
+                    >
+                      <option selected value={user.gender}>
+                        {user.gender}
+                      </option>
+                      {user.gender === "mele" ? (
+                        <option value={"male"}>male</option>
+                      ) : (
+                        <option value={"female"}>female</option>
+                      )}
+                    </select>
                   </li>
                   <li className="lg:font-medium lg:text-md font-light text-sm">
                     :{" "}
@@ -150,7 +205,10 @@ const EditProfile = () => {
             </div>
           </div>
           <div className="flex w-full justify-center py-10 items-center">
-            <button className="btn border-none bg-teal-600 text-white">
+            <button
+              onClick={handleClick}
+              className="btn border-none bg-teal-600 hover:bg-teal-600 text-white"
+            >
               Update
             </button>
           </div>

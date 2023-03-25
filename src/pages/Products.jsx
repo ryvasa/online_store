@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Dialog, Disclosure, Menu, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
@@ -10,107 +10,38 @@ import {
 import Navbar from "../components/Navbar";
 import ProduckQuickView from "../components/ProductQuickView";
 import { Link } from "react-router-dom";
-import { IoEyeSharp } from "react-icons/io5";
+import { IoEyeSharp, IoSearchSharp } from "react-icons/io5";
+import axios from "axios";
 
-const products = [
-  {
-    id: 1,
-    name: "Basic Tee",
-    href: "#",
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/product-page-01-related-product-01.jpg",
-    imageAlt: "Front of men's Basic Tee in black.",
-    price: "$35",
-    color: "Black",
-  },
-  {
-    id: 2,
-    name: "Basic Tee",
-    href: "#",
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/product-page-01-related-product-01.jpg",
-    imageAlt: "Front of men's Basic Tee in black.",
-    price: "$35",
-    color: "Black",
-  },
-  {
-    id: 3,
-    name: "Basic Tee",
-    href: "#",
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/product-page-01-related-product-01.jpg",
-    imageAlt: "Front of men's Basic Tee in black.",
-    price: "$35",
-    color: "Black",
-  },
-  {
-    id: 4,
-    name: "Basic Tee",
-    href: "#",
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/product-page-01-related-product-01.jpg",
-    imageAlt: "Front of men's Basic Tee in black.",
-    price: "$35",
-    color: "Black",
-  },
-  ,
-  // More products...
-  {
-    id: 5,
-    name: "Basic Tee",
-    href: "#",
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/product-page-01-related-product-01.jpg",
-    imageAlt: "Front of men's Basic Tee in black.",
-    price: "$35",
-    color: "Black",
-  },
-  {
-    id: 6,
-    name: "Basic Tee",
-    href: "#",
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/product-page-01-related-product-01.jpg",
-    imageAlt: "Front of men's Basic Tee in black.",
-    price: "$35",
-    color: "Black",
-  },
-  {
-    id: 7,
-    name: "Basic Tee",
-    href: "#",
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/product-page-01-related-product-01.jpg",
-    imageAlt: "Front of men's Basic Tee in black.",
-    price: "$35",
-    color: "Black",
-  },
-  {
-    id: 8,
-    name: "Basic Tee",
-    href: "#",
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/product-page-01-related-product-01.jpg",
-    imageAlt: "Front of men's Basic Tee in black.",
-    price: "$35",
-    color: "Black",
-  },
-  // More products...
-];
 const sortOptions = [
-  { name: "Most Popular", href: "#", current: true },
-  { name: "Best Rating", href: "#", current: false },
-  { name: "Newest", href: "#", current: false },
-  { name: "Price: Low to High", href: "#", current: false },
-  { name: "Price: High to Low", href: "#", current: false },
+  { name: "Most Popular", href: "#", current: true, value: "" },
+  { name: "Best :Low to High", value: "soldAsc" },
+  { name: "Best :High to Low", value: "soldDesc" },
+  { name: "Price: Low to High", value: "priceAsc" },
+  { name: "Price: High to Low", value: "priceDesc" },
 ];
-const subCategories = [
-  { name: "Totes", href: "#" },
-  { name: "Backpacks", href: "#" },
-  { name: "Travel Bags", href: "#" },
-  { name: "Hip Bags", href: "#" },
-  { name: "Laptop Sleeves", href: "#" },
+
+const categories = [
+  "men",
+  "women",
+  "hat",
+  "shoes",
+  "casual",
+  "tshirt",
+  "sport",
 ];
+const colors = [
+  "bg-white",
+  "bg-gray-200",
+  "bg-green-500",
+  "bg-red-600",
+  "bg-blue-600",
+  "bg-yellow-400",
+  "bg-purple-600",
+  "bg-black",
+];
+const sizes = ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL"];
+
 const filters = [
   {
     id: "color",
@@ -118,7 +49,7 @@ const filters = [
     options: [
       { value: "white", label: "White", checked: false },
       { value: "beige", label: "Beige", checked: false },
-      { value: "blue", label: "Blue", checked: true },
+      { value: "blue", label: "Blue", checked: false },
       { value: "brown", label: "Brown", checked: false },
       { value: "green", label: "Green", checked: false },
       { value: "purple", label: "Purple", checked: false },
@@ -130,7 +61,7 @@ const filters = [
     options: [
       { value: "new-arrivals", label: "New Arrivals", checked: false },
       { value: "sale", label: "Sale", checked: false },
-      { value: "travel", label: "Travel", checked: true },
+      { value: "travel", label: "Travel", checked: false },
       { value: "organization", label: "Organization", checked: false },
       { value: "accessories", label: "Accessories", checked: false },
     ],
@@ -144,7 +75,7 @@ const filters = [
       { value: "12l", label: "12L", checked: false },
       { value: "18l", label: "18L", checked: false },
       { value: "20l", label: "20L", checked: false },
-      { value: "40l", label: "40L", checked: true },
+      { value: "40l", label: "40L", checked: false },
     ],
   },
 ];
@@ -155,7 +86,30 @@ function classNames(...classes) {
 
 const Products = () => {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [size, setSize] = useState("");
+  const [color, setColor] = useState("");
+  const [category, setCategory] = useState("");
+  const [search, setSearch] = useState("");
+  const [products, setProducts] = useState([]);
+  const [sort, setSort] = useState("");
 
+  const getProducts = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/products/store?search=${search}${
+          category && `&category=${category}`
+        }${size && `&size=${size}`}${color && `&color=${color}`}${
+          sort && `&sort=${sort}`
+        }`
+      );
+      setProducts(response.data.result);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    getProducts();
+  }, [search, size, color, category, sort]);
   return (
     <>
       <Navbar />
@@ -212,7 +166,7 @@ const Products = () => {
                         role="list"
                         className="px-2 py-3 font-medium text-gray-900"
                       >
-                        {subCategories.map((category) => (
+                        {categories.map((category) => (
                           <li key={category.name}>
                             <Link
                               to={category.href}
@@ -260,6 +214,9 @@ const Products = () => {
                                       className="flex items-center"
                                     >
                                       <input
+                                        onChange={(e) =>
+                                          setSize(e.target.value)
+                                        }
                                         id={`filter-mobile-${section.id}-${optionIdx}`}
                                         name={`${section.id}[]`}
                                         defaultValue={option.value}
@@ -295,51 +252,40 @@ const Products = () => {
               </h1>
 
               <div className="flex lg:w-auto w-full justify-between items-center">
-                <Menu as="div" className="relative inline-block text-left">
-                  <div>
-                    <Menu.Button className="group inline-flex justify-center text-sm font-medium text-gray-700 hover:text-gray-900">
-                      Sort
-                      <ChevronDownIcon
-                        className="-mr-1 ml-1 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
-                        aria-hidden="true"
-                      />
-                    </Menu.Button>
+                <div className="flex items-center border rounded-lg mr-5">
+                  <div className="form-control h-8 ">
+                    <input
+                      name="search"
+                      onChange={(e) => setSearch(e.target.value)}
+                      type="text"
+                      placeholder="Search"
+                      className="input "
+                    />
                   </div>
-
-                  <Transition
-                    as={Fragment}
-                    enter="transition ease-out duration-100"
-                    enterFrom="transform opacity-0 scale-95"
-                    enterTo="transform opacity-100 scale-100"
-                    leave="transition ease-in duration-75"
-                    leaveFrom="transform opacity-100 scale-100"
-                    leaveTo="transform opacity-0 scale-95"
+                  <Link
+                    to={`/products?search=`}
+                    className="hover:bg-teal-600 rounded-lg hover:text-white "
                   >
-                    <Menu.Items className="absolute lg:right-0 z-10 mt-2 w-40 origin-top-right rounded-md bg-teal-600 text-white shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none">
-                      <div className="py-1">
-                        {sortOptions.map((option) => (
-                          <Menu.Item key={option.name}>
-                            {({ active }) => (
-                              <Link
-                                to={option.href}
-                                className={classNames(
-                                  option.current
-                                    ? "font-medium border-2 rounded border-white"
-                                    : "text-white",
-                                  active ? "bg-white" : "text-white",
-                                  "block px-3 mx-1 py-2 text-sm rounded-lg hover:text-teal-600"
-                                )}
-                              >
-                                {option.name}
-                              </Link>
-                            )}
-                          </Menu.Item>
-                        ))}
-                      </div>
-                    </Menu.Items>
-                  </Transition>
-                </Menu>
-
+                    <IoSearchSharp className="w-6 h-6 m-1" />
+                  </Link>
+                </div>
+                <div className="w-full flex ">
+                  <select
+                    onChange={(e) => setSort(e.target.value)}
+                    className="w-full font-medium border-teal-600 border-2 text-gray-900 select "
+                  >
+                    <option selected value={""}>
+                      Newest
+                    </option>
+                    {sortOptions.map((sOption, index) => (
+                      <>
+                        <option key={index} value={sOption.value}>
+                          {sOption.name}
+                        </option>
+                      </>
+                    ))}
+                  </select>
+                </div>
                 <button
                   type="button"
                   className="-m-2 ml-4 p-2 text-gray-400 hover:text-gray-500 sm:ml-6 lg:hidden"
@@ -358,83 +304,59 @@ const Products = () => {
 
               <div className="grid grid-cols-1 lg:grid-cols-4 lg:h-screen">
                 {/* Filters */}
-                <form className="hidden lg:block bg-white  border-r-2 lg:overflow-y-auto h-[500px] p-5">
-                  <h3 className="sr-only">Categories</h3>
-                  <ul
-                    role="list"
-                    className="space-y-4 border-b-2 border-teal-600 pb-6 text-sm font-medium text-gray-900"
-                  >
-                    {subCategories.map((category) => (
-                      <li key={category.name} className="group ">
-                        <div className="group-hover:bg-teal-600 rounded-lg w-full p-2">
-                          <Link
-                            to={category.href}
-                            className="text-md group-hover:text-white "
-                          >
-                            {category.name}
-                          </Link>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {filters.map((section) => (
-                    <Disclosure
-                      as="div"
-                      key={section.id}
-                      className=" p-3 mt-2 rounded-lg border-2 border-teal-600 "
+                <form className="hidden lg:flex bg-white  border-r-2 lg:overflow-y-auto h-[500px] p-5  lg:flex-col gap-5">
+                  <div className="w-full flex flex-col gap-2 ">
+                    <span>Category</span>
+                    <select
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full font-medium border-teal-600 border-2 text-gray-900 select "
                     >
-                      {({ open }) => (
+                      <option selected value={""}>
+                        All Categories
+                      </option>
+                      {categories.map((category, index) => (
                         <>
-                          <h3 className="-my-3 flow-root">
-                            <Disclosure.Button className="flex w-full items-center justify-between bg-white py-3 text-sm text-gray-800 hover:text-gray-900">
-                              <span className="font-medium">
-                                {section.name}
-                              </span>
-                              <span className="ml-6 flex items-center">
-                                {open ? (
-                                  <MinusIcon
-                                    className="h-5 w-5 text-teal-600"
-                                    aria-hidden="true"
-                                  />
-                                ) : (
-                                  <PlusIcon
-                                    className="h-5 w-5 text-teal-600"
-                                    aria-hidden="true"
-                                  />
-                                )}
-                              </span>
-                            </Disclosure.Button>
-                          </h3>
-                          <Disclosure.Panel className="pt-6">
-                            <div className="space-y-1">
-                              {section.options.map((option, optionIdx) => (
-                                <div
-                                  key={option.value}
-                                  className="flex items-center group hover:bg-teal-600 rounded-md p-2"
-                                >
-                                  <input
-                                    id={`filter-${section.id}-${optionIdx}`}
-                                    name={`${section.id}[]`}
-                                    defaultValue={option.value}
-                                    type="checkbox"
-                                    defaultChecked={option.checked}
-                                    className="checkbox checkbox-sm group-hover:bg-white"
-                                  />
-                                  <label
-                                    htmlFor={`filter-${section.id}-${optionIdx}`}
-                                    className="ml-3 text-md group-hover:text-white"
-                                  >
-                                    {option.label}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          </Disclosure.Panel>
+                          <option key={index} value={category}>
+                            {category}
+                          </option>
                         </>
-                      )}
-                    </Disclosure>
-                  ))}
+                      ))}
+                    </select>
+                  </div>
+                  <div className="w-full flex flex-col gap-2 border-t-2 pt-2 ">
+                    <span>Size</span>
+                    <select
+                      onChange={(e) => setSize(e.target.value)}
+                      className="w-full font-medium border-teal-600 border-2 text-gray-900 select "
+                    >
+                      <option selected value={""}>
+                        All Sizes
+                      </option>
+                      {sizes.map((size, index) => (
+                        <>
+                          <option key={index} value={size}>
+                            {size}
+                          </option>
+                        </>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="w-full flex flex-col gap-2 border-t-2 pt-2 ">
+                    <span>Color</span>
+                    <select
+                      onChange={(e) => setColor(e.target.value)}
+                      className="w-full font-medium border-teal-600 border-2 text-gray-900 select "
+                    >
+                      <option selected value={""}>
+                        Select color
+                      </option>
+                      {colors.map((color, index) => (
+                        <>
+                          <option value={color}>{color.split("-")[1]}</option>
+                        </>
+                      ))}
+                    </select>
+                  </div>
                 </form>
 
                 {/* Product grid */}
@@ -442,17 +364,17 @@ const Products = () => {
                   <div className=" grid grid-cols-2 gap-y-10 gap-x-6 lg:grid-cols-3 xl:gap-x-8 ">
                     {products.map((product) => (
                       <div
-                        key={product.id}
+                        key={product.uuid}
                         className="group relative shadow-lg rounded-lg bg-white"
                       >
                         <Link
                           className="relative"
-                          to={`/products/${product.id}`}
+                          to={`/products/${product.uuid}`}
                         >
                           <div className=" min-h-80 aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200 group-hover:opacity-50 lg:aspect-none lg:h-80 ">
                             <img
-                              src={product.imageSrc}
-                              alt={product.imageAlt}
+                              src={product.img[0]}
+                              alt=""
                               className="h-full w-full object-cover object-center lg:h-full lg:w-full"
                             />
                           </div>
@@ -464,23 +386,30 @@ const Products = () => {
                           </div>
                         </Link>
                         <div className="mt-4 flex p-2 justify-between">
-                          <div className="flex-1">
+                          <div className="flex-1 flex gap-1 flex-col">
                             <h3 className="text-sm text-gray-700">
-                              <Link to={`/products/${product.id}`}>
+                              <Link to={`/products/${product.uuid}`}>
                                 <span aria-hidden="true" className="" />
                                 {product.name}
                               </Link>
                             </h3>
-                            <p className="mt-1 text-sm text-gray-500">
-                              {product.color}
-                            </p>
+                            <div className="flex gap-1">
+                              {product.stock?.map((ps) => (
+                                <div
+                                  className={classNames(
+                                    ps.color,
+                                    "h-5 w-5 rounded-full border border-black border-opacity-10"
+                                  )}
+                                />
+                              ))}
+                            </div>
                           </div>
-                          <div className="items-end flex-1 flex-col flex justify-end  text-end">
+                          <div className="items-end flex-1 flex-col flex justify-center  text-end">
                             <p className="lg:text-lg lg:font-semibold  text-gray-900">
-                              {product.price}
+                              $ {product.price}
                             </p>
                             <div className="flex text-center justfy-center items-center">
-                              <ProduckQuickView />
+                              <ProduckQuickView uuid={product.uuid} />
                             </div>
                           </div>
                         </div>

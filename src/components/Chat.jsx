@@ -40,7 +40,7 @@ const Chat = ({ type }) => {
         {type === "desktop" ? (
           <button
             onClick={(e) => setOpen(true)}
-            className=" btn btn-ghost btn-circle rounded-full flex group-hover:bg-teal-600 group-hover:text-white  gap-1 items-center  "
+            className=" btn btn-sm btn-ghost btn-circle rounded-full flex group-hover:bg-teal-600 group-hover:text-white  gap-1 items-center  "
           >
             <MdHeadsetMic className="w-6 h-6 text-teal-600 group-hover:text-white " />
           </button>

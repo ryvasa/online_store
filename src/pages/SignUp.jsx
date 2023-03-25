@@ -1,7 +1,54 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const SignUp = () => {
+  const [message, setMessage] = useState("");
+  const [inputs, setInputs] = useState({});
+  const [id, setId] = useState("");
+  const navigate = useNavigate();
+  const handleChange = (e) => {
+    setMessage("");
+    setInputs((prev) => {
+      return { ...prev, [e.target.name]: e.target.value };
+    });
+  };
+  const signup = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/signup", inputs);
+      setId(response.data.id);
+    } catch (error) {
+      setMessage(error.response.data.message);
+      console.log(error);
+    }
+  };
+  const getFirstToken = async () => {
+    try {
+      if (id) {
+        const response = await axios.get(`http://localhost:5000/first/${id}`);
+        localStorage.setItem("token", JSON.stringify(response.data.token));
+
+        if (response) {
+          const response = await axios.get(`http://localhost:5000/me`);
+          localStorage.setItem("user", JSON.stringify(response.data));
+        }
+      } else {
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const data = localStorage.getItem("user");
+  const user = JSON.parse(data);
+  useEffect(() => {
+    getFirstToken();
+  }, [id]);
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [id, data, user]);
   return (
     <div className="hero min-h-screen relative bg-base-200">
       <svg
@@ -25,56 +72,106 @@ const SignUp = () => {
           </p>
         </div>
         <div className="w-full flex-1 flex justify-center">
-          <div className="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
+          <div className="card flex-shrink-0 w-full max-w-xl shadow-2xl bg-base-100">
             <div className="card-body">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Username</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="username"
-                  className="input input-bordered"
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Email</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="email"
-                  className="input input-bordered"
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Password</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="password"
-                  className="input input-bordered"
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Confirm Password</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="confirm password"
-                  className="input input-bordered"
-                />
-              </div>
-              <Link to={"/signin"} className="text-sm pt-3">
-                Have an account?
-                <span className="text-teal-600"> Sign In here</span>.
-              </Link>
-              <div className="form-control mt-6">
-                <button className="btn bg-teal-600 hover:bg-teal-500 border-none">
-                  Sign Up
-                </button>
+              {message && (
+                <div className="flex w-full justify-center bg-red-200 rounded-lg p-2">
+                  <div className="text-red-700">{message}</div>
+                </div>
+              )}
+              <div className="flex flex-row gap-5">
+                <div className="flex-1 flex flex-col">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Username</span>
+                    </label>
+                    <input
+                      name="name"
+                      onChange={handleChange}
+                      type="text"
+                      placeholder="username"
+                      className="input input-bordered"
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Email</span>
+                    </label>
+                    <input
+                      name="email"
+                      onChange={handleChange}
+                      type="email"
+                      placeholder="email"
+                      className="input input-bordered"
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Phone</span>
+                    </label>
+                    <input
+                      name="phone"
+                      onChange={handleChange}
+                      type="number"
+                      placeholder="phone"
+                      className="input input-bordered"
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Gender</span>
+                    </label>
+                    <select
+                      onChange={handleChange}
+                      name="gender"
+                      className="input input-bordered"
+                    >
+                      <option disabled selected>
+                        Select Gender
+                      </option>
+                      <option value={"male"}>Male</option>
+                      <option value={"female"}>Female</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Password</span>
+                    </label>
+                    <input
+                      name="password"
+                      onChange={handleChange}
+                      type="password"
+                      placeholder="password"
+                      className="input input-bordered"
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Confirm Password</span>
+                    </label>
+                    <input
+                      name="confirmPassword"
+                      onChange={handleChange}
+                      type="password"
+                      placeholder="confirm password"
+                      className="input input-bordered"
+                    />
+                  </div>
+                  <Link to={"/signin"} className="text-sm pt-3">
+                    Have an account?
+                    <span className="text-teal-600"> Sign In here</span>.
+                  </Link>
+                  <div className="form-control mt-6">
+                    <button
+                      onClick={signup}
+                      className="btn bg-teal-600 hover:bg-teal-500 border-none"
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

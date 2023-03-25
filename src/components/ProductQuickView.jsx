@@ -1,43 +1,56 @@
-import { Fragment, useState } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/20/solid";
 import { FaCartPlus } from "react-icons/fa";
-
-const product = {
-  name: "Basic Tee 6-Pack ",
-  price: "$192",
-  rating: 3.9,
-  reviewCount: 117,
-  href: "#",
-  imageSrc:
-    "https://tailwindui.com/img/ecommerce-images/product-quick-preview-02-detail.jpg",
-  imageAlt: "Two each of gray, white, and black shirts arranged on table.",
-  colors: [
-    { name: "White", class: "bg-white", selectedClass: "ring-gray-400" },
-    { name: "Gray", class: "bg-gray-200", selectedClass: "ring-gray-400" },
-    { name: "Black", class: "bg-gray-900", selectedClass: "ring-gray-900" },
-  ],
-  sizes: [
-    { name: "XXS", inStock: true },
-    { name: "XS", inStock: true },
-    { name: "S", inStock: true },
-    { name: "M", inStock: true },
-    { name: "L", inStock: true },
-    { name: "XL", inStock: true },
-    { name: "XXL", inStock: true },
-    { name: "XXXL", inStock: false },
-  ],
-};
+import axios from "axios";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-const ProductQuicView = () => {
+const ProductQuicView = ({ uuid }) => {
   const [open, setOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState(product.colors[0]);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[2]);
+  const [color, setColor] = useState("");
+  const [size, setSize] = useState("");
+  const [product, setProduct] = useState({});
+
+  const handleStockSelection = (e) => {
+    setSize(e.target.value.split(",")[0]);
+    setColor(e.target.value.split(",")[1]);
+  };
+  const getProduct = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/products/${uuid}`
+      );
+      setProduct(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const addCart = async () => {
+    try {
+      const data = {
+        product_id: uuid,
+        color: color,
+        size: size,
+        quantity: 1,
+      };
+      const response = await axios.post(`http://localhost:5000/cart`, data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleClick = (e) => {
+    e.preventDefault();
+    addCart();
+  };
+  useEffect(() => {
+    if (open) {
+      getProduct();
+    }
+  }, [open]);
   return (
     <>
       <div className="flex justify-center items-center w-full h-full">
@@ -83,11 +96,13 @@ const ProductQuicView = () => {
 
                     <div className="grid w-full grid-cols-1 items-start gap-y-8 gap-x-6 sm:grid-cols-12 lg:gap-x-8">
                       <div className="aspect-w-2 aspect-h-3 overflow-hidden rounded-lg bg-gray-100 sm:col-span-4 lg:col-span-5">
-                        <img
-                          src={product.imageSrc}
-                          alt={product.imageAlt}
-                          className="object-cover object-center"
-                        />
+                        {product && product.img && (
+                          <img
+                            src={product.img[0]}
+                            alt=""
+                            className="object-cover object-center"
+                          />
+                        )}
                       </div>
                       <div className="sm:col-span-8 lg:col-span-7">
                         <h2 className="text-2xl font-bold text-gray-900 sm:pr-12">
@@ -103,38 +118,8 @@ const ProductQuicView = () => {
                           </h3>
 
                           <p className="text-2xl text-gray-900">
-                            {product.price}
+                            $ {product.price}
                           </p>
-
-                          {/* Reviews */}
-                          <div className="mt-6">
-                            <h4 className="sr-only">Reviews</h4>
-                            <div className="flex items-center">
-                              <div className="flex items-center">
-                                {[0, 1, 2, 3, 4].map((rating) => (
-                                  <StarIcon
-                                    key={rating}
-                                    className={classNames(
-                                      product.rating > rating
-                                        ? "text-gray-900"
-                                        : "text-gray-200",
-                                      "h-5 w-5 flex-shrink-0"
-                                    )}
-                                    aria-hidden="true"
-                                  />
-                                ))}
-                              </div>
-                              <p className="sr-only">
-                                {product.rating} out of 5 stars
-                              </p>
-                              <a
-                                href="#"
-                                className="ml-3 text-sm font-medium text-teal-600 hover:text-teal-500"
-                              >
-                                {product.reviewCount} reviews
-                              </a>
-                            </div>
-                          </div>
                         </section>
 
                         <section
@@ -146,142 +131,81 @@ const ProductQuicView = () => {
                           </h3>
 
                           <form>
-                            {/* Colors */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900">
-                                Color
-                              </h4>
+                            <div className="w-full flex-col flex">
+                              <h3 className="text-xl font-semibold">
+                                Select Option
+                              </h3>
+                              <form>
+                                <div className="grid grid-cols-3 py-3 gap-4">
+                                  {product.stock?.map((stock, index) => (
+                                    <div className="" key={index}>
+                                      {stock.size === size &&
+                                      stock.color === color ? (
+                                        <div className=" rounded-full outline outline-teal-600 flex items-center justify-center  bg-white p-1">
+                                          <input
+                                            onClick={handleStockSelection}
+                                            type="radio"
+                                            name="stock"
+                                            value={[stock.size, stock.color]}
+                                            id={[stock.size, stock.color]}
+                                            className="hidden"
+                                          />
 
-                              <RadioGroup
-                                value={selectedColor}
-                                onChange={setSelectedColor}
-                                className="mt-4"
-                              >
-                                <RadioGroup.Label className="sr-only">
-                                  {" "}
-                                  Choose a color{" "}
-                                </RadioGroup.Label>
-                                <span className="flex items-center space-x-3">
-                                  {product.colors.map((color) => (
-                                    <RadioGroup.Option
-                                      key={color.name}
-                                      value={color}
-                                      className={({ active, checked }) =>
-                                        classNames(
-                                          color.selectedClass,
-                                          active && checked
-                                            ? "ring ring-offset-1"
-                                            : "",
-                                          !active && checked ? "ring-2" : "",
-                                          "relative -m-0.5 flex cursor-pointer items-center justify-center rounded-full p-0.5 focus:outline-none"
-                                        )
-                                      }
-                                    >
-                                      <RadioGroup.Label
-                                        as="span"
-                                        className="sr-only"
-                                      >
-                                        {" "}
-                                        {color.name}{" "}
-                                      </RadioGroup.Label>
-                                      <span
-                                        aria-hidden="true"
-                                        className={classNames(
-                                          color.class,
-                                          "h-8 w-8 rounded-full border border-black border-opacity-10"
-                                        )}
-                                      />
-                                    </RadioGroup.Option>
-                                  ))}
-                                </span>
-                              </RadioGroup>
-                            </div>
+                                          <label
+                                            htmlFor={[stock.size, stock.color]}
+                                            className="flex items-center w-full cursor-pointer"
+                                          >
+                                            <div className="flex-1">
+                                              <div
+                                                className={classNames(
+                                                  stock.color,
+                                                  "relative flex  items-center justify-center rounded-full w-7 h-7 border-2 "
+                                                )}
+                                              />
+                                            </div>
 
-                            {/* Sizes */}
-                            <div className="mt-10">
-                              <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-medium text-gray-900">
-                                  Size
-                                </h4>
-                                <a
-                                  href="#"
-                                  className="text-sm font-medium text-teal-600 hover:text-teal-500"
-                                >
-                                  Size guide
-                                </a>
-                              </div>
+                                            <div className="text-lg flex-1">
+                                              {stock.size}
+                                            </div>
+                                          </label>
+                                        </div>
+                                      ) : (
+                                        <div className=" rounded-full outline outline-gray-100 flex items-center justify-center  ml-2  bg-white p-1">
+                                          <input
+                                            onClick={handleStockSelection}
+                                            type="radio"
+                                            name="stock"
+                                            value={[stock.size, stock.color]}
+                                            id={[stock.size, stock.color]}
+                                            className="hidden"
+                                          />
 
-                              <RadioGroup
-                                value={selectedSize}
-                                onChange={setSelectedSize}
-                                className="mt-4"
-                              >
-                                <RadioGroup.Label className="sr-only">
-                                  {" "}
-                                  Choose a size{" "}
-                                </RadioGroup.Label>
-                                <div className="grid grid-cols-4 gap-4">
-                                  {product.sizes.map((size) => (
-                                    <RadioGroup.Option
-                                      key={size.name}
-                                      value={size}
-                                      disabled={!size.inStock}
-                                      className={({ active }) =>
-                                        classNames(
-                                          size.inStock
-                                            ? "cursor-pointer bg-white text-gray-900 shadow-sm"
-                                            : "cursor-not-allowed bg-gray-50 text-gray-200",
-                                          active ? "ring-2 ring-teal-500" : "",
-                                          "group relative flex items-center justify-center rounded-md border py-3 px-4 text-sm font-medium uppercase hover:bg-gray-50 focus:outline-none sm:flex-1"
-                                        )
-                                      }
-                                    >
-                                      {({ active, checked }) => (
-                                        <>
-                                          <RadioGroup.Label as="span">
-                                            {size.name}
-                                          </RadioGroup.Label>
-                                          {size.inStock ? (
-                                            <span
-                                              className={classNames(
-                                                active ? "border" : "border-2",
-                                                checked
-                                                  ? "border-teal-500"
-                                                  : "border-transparent",
-                                                "pointer-events-none absolute -inset-px rounded-md"
-                                              )}
-                                              aria-hidden="true"
-                                            />
-                                          ) : (
-                                            <span
-                                              aria-hidden="true"
-                                              className="pointer-events-none absolute -inset-px rounded-md border-2 border-gray-200"
-                                            >
-                                              <svg
-                                                className="absolute inset-0 h-full w-full stroke-2 text-gray-200"
-                                                viewBox="0 0 100 100"
-                                                preserveAspectRatio="none"
-                                                stroke="currentColor"
-                                              >
-                                                <line
-                                                  x1={0}
-                                                  y1={100}
-                                                  x2={100}
-                                                  y2={0}
-                                                  vectorEffect="non-scaling-stroke"
-                                                />
-                                              </svg>
-                                            </span>
-                                          )}
-                                        </>
+                                          <label
+                                            htmlFor={[stock.size, stock.color]}
+                                            className="flex items-center w-full cursor-pointer"
+                                          >
+                                            <div className="flex-1">
+                                              <div
+                                                className={classNames(
+                                                  stock.color,
+                                                  "relative flex  items-center justify-center rounded-full w-7 h-7 border-2 "
+                                                )}
+                                              />
+                                            </div>
+
+                                            <div className="text-lg flex-1">
+                                              {stock.size}
+                                            </div>
+                                          </label>
+                                        </div>
                                       )}
-                                    </RadioGroup.Option>
+                                    </div>
                                   ))}
                                 </div>
-                              </RadioGroup>
+                              </form>
                             </div>
-
                             <button
+                              onClick={handleClick}
                               type="submit"
                               className="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-teal-600 py-3 px-8 text-base font-medium text-white hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
                             >

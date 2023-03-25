@@ -1,7 +1,38 @@
-import React from "react";
-import { Link } from "react-router-dom";
-
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 const SignIn = () => {
+  const navigate = useNavigate();
+  const [inputs, setInputs] = useState({});
+  const [message, setMessage] = useState("");
+  const signIn = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/signin", inputs);
+      localStorage.setItem("token", JSON.stringify(response.data.token));
+      if (response) {
+        const response = await axios.get(`http://localhost:5000/me`);
+        console.log(response);
+        localStorage.setItem("user", JSON.stringify(response.data));
+        navigate("/");
+      }
+    } catch (error) {
+      setMessage(error.response.data.message);
+      console.log(error);
+    }
+  };
+  const handleChange = (e) => {
+    setMessage("");
+    setInputs((prev) => {
+      return { ...prev, [e.target.name]: e.target.value };
+    });
+  };
+  const data = localStorage.getItem("user");
+  const user = JSON.parse(data);
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, []);
   return (
     <div className="hero min-h-screen bg-base-200">
       <svg
@@ -27,11 +58,18 @@ const SignIn = () => {
         <div className="flex flex-1 justify-center">
           <div className="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
             <div className="card-body">
+              {message && (
+                <div className="flex w-full bg-red-300 justify-center p-2">
+                  <div className="text-red-700">{message}</div>
+                </div>
+              )}
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">Email</span>
                 </label>
                 <input
+                  name="email"
+                  onChange={handleChange}
                   type="text"
                   placeholder="email"
                   className="input input-bordered"
@@ -42,6 +80,8 @@ const SignIn = () => {
                   <span className="label-text">Password</span>
                 </label>
                 <input
+                  name="password"
+                  onChange={handleChange}
                   type="text"
                   placeholder="password"
                   className="input input-bordered"
@@ -52,7 +92,10 @@ const SignIn = () => {
                 <span className="text-teal-600"> Sign Up here</span>.
               </Link>
               <div className="form-control mt-6">
-                <button className="btn bg-teal-600 hover:bg-teal-500 border-none">
+                <button
+                  onClick={signIn}
+                  className="btn bg-teal-600 hover:bg-teal-500 border-none"
+                >
                   Sign In
                 </button>
               </div>

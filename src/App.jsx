@@ -9,6 +9,10 @@ import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
+import axios from "axios";
+
+axios.defaults.withCredentials = true;
+
 function App() {
   return (
     <BrowserRouter>

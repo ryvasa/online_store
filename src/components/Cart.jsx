@@ -1,50 +1,77 @@
-import { Fragment, useState } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { IoCart } from "react-icons/io5";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import { refreshToken } from "../utils/refreshToken";
+import { MdAddBox, MdIndeterminateCheckBox } from "react-icons/md";
 
-const products = [
-  {
-    id: 1,
-    name: "Throwback Hip Bag",
-    href: "#",
-    color: "Salmon",
-    price: "$90.00",
-    quantity: 1,
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/shopping-cart-page-04-product-01.jpg",
-    imageAlt:
-      "Salmon orange fabric pouch with match zipper, gray zipper pull, and adjustable hip belt.",
-  },
-  {
-    id: 2,
-    name: "Medium Stuff Satchel",
-    href: "#",
-    color: "Blue",
-    price: "$32.00",
-    quantity: 1,
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/shopping-cart-page-04-product-02.jpg",
-    imageAlt:
-      "Front of satchel with blue canvas body, black straps and handle, drawstring top, and front zipper pouch.",
-  },
-  // More products...
-];
+function classNames(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
 
 const Cart = () => {
+  const [products, setProducts] = useState([]);
+  const [message, setMessage] = useState("");
   const [open, setOpen] = useState(false);
+  const getProductCart = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/cart");
+      setProducts(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    refreshToken().then(() => {
+      getProductCart();
+      setMessage("");
+    });
+  }, [open]);
+  const handleDelete = async (id) => {
+    try {
+      refreshToken().then(async () => {
+        const response = await axios.delete(`http://localhost:5000/cart/${id}`);
+        getProductCart();
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleQuantity = async (id, data) => {
+    refreshToken().then(async () => {
+      try {
+        const response = await axios.put(`http://localhost:5000/cart/${id}`, {
+          operation: data,
+        });
+        setMessage("");
+        getProductCart();
+      } catch (error) {
+        setMessage(error.response.data.message);
+        console.log(error);
+      }
+    });
+  };
 
   return (
     <>
       <div className="group">
         <button
           onClick={(e) => setOpen(true)}
-          className=" btn btn-ghost rounded-full flex group-hover:bg-teal-600 group-hover:text-white  gap-1 items-center  "
+          className="btn-sm  btn btn-ghost rounded-full flex hover:bg-white  text-white  gap-1 items-center bg-teal-600 border-2 border-transparent hover:border-teal-600"
         >
-          <IoCart className="w-6 h-6 text-teal-600 group-hover:text-white " />
-          <span className="normal-case hidden  lg:block">Cart</span>
-        </button>
+          <IoCart className="w-6 h-6 text-white group-hover:text-teal-600 " />
+          <span className="normal-case hidden group-hover:text-teal-600  lg:block">
+            Cart
+          </span>
+          <div className="flex w-4 h-4 rounded-full bg-white group-hover:bg-teal-600 justify-center items-center ml-1">
+            <span className="text-teal-600 group-hover:text-white">
+              {products?.length}
+            </span>
+          </div>
+        </button>{" "}
       </div>
       <Transition.Root show={open} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={setOpen}>
@@ -100,12 +127,12 @@ const Cart = () => {
                               role="list"
                               className="-my-6 divide-y divide-gray-200"
                             >
-                              {products.map((product) => (
-                                <li key={product.id} className="flex py-6">
+                              {products?.map((product) => (
+                                <li key={product.uuid} className="flex py-6">
                                   <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                                     <img
-                                      src={product.imageSrc}
-                                      alt={product.imageAlt}
+                                      src={product.product?.img[0]}
+                                      alt=""
                                       className="h-full w-full object-cover object-center"
                                     />
                                   </div>
@@ -114,23 +141,57 @@ const Cart = () => {
                                     <div>
                                       <div className="flex justify-between text-base font-medium text-gray-900">
                                         <h3>
-                                          <a href={product.href}>
-                                            {product.name}
-                                          </a>
+                                          <Link
+                                            to={`/products/${product.product_id}`}
+                                          >
+                                            {product.product?.name}
+                                          </Link>
                                         </h3>
-                                        <p className="ml-4">{product.price}</p>
+                                        <p className="ml-4">
+                                          $ {product.price}
+                                        </p>
+                                      </div>
+                                      <div className="mt-1 text-sm text-gray-500 flex gap-2">
+                                        <div
+                                          className={classNames(
+                                            product.stock?.color,
+                                            "h-5 w-5 rounded-full border border-black border-opacity-10"
+                                          )}
+                                        />
+                                        <p>
+                                          {product.stock?.color.split("-")[1]}
+                                        </p>
                                       </div>
                                       <p className="mt-1 text-sm text-gray-500">
-                                        {product.color}
+                                        Size : {product.stock?.size}
                                       </p>
                                     </div>
                                     <div className="flex flex-1 items-end justify-between text-sm">
-                                      <p className="text-gray-500">
-                                        Qty {product.quantity}
-                                      </p>
-
+                                      <div className="flex gap-5">
+                                        <MdIndeterminateCheckBox
+                                          className="w-6 h-6 cursor-pointer"
+                                          onClick={(e) => {
+                                            handleQuantity(
+                                              product.uuid,
+                                              "reduce"
+                                            );
+                                          }}
+                                        />
+                                        <p className="text-gray-500">
+                                          Qty {product.quantity}
+                                        </p>
+                                        <MdAddBox
+                                          className="w-6 h-6 cursor-pointer"
+                                          onClick={(e) => {
+                                            handleQuantity(product.uuid, "add");
+                                          }}
+                                        />
+                                      </div>
                                       <div className="flex">
                                         <button
+                                          onClick={(e) =>
+                                            handleDelete(product.uuid)
+                                          }
                                           type="button"
                                           className="font-medium text-red-600 hover:text-red-500"
                                         >
@@ -147,9 +208,19 @@ const Cart = () => {
                       </div>
 
                       <div className="border-t border-gray-200 py-6 px-4 sm:px-6">
+                        {message && (
+                          <div className="w-full flex justify-center rounded-lg bg-red-300 p-2">
+                            <div className="text-red-700">{message}</div>
+                          </div>
+                        )}
                         <div className="flex justify-between text-base font-medium text-gray-900">
                           <p>Subtotal</p>
-                          <p>$262.00</p>
+                          <p>
+                            ${" "}
+                            {products.reduce(function (acc, dataItem) {
+                              return acc + dataItem.price;
+                            }, 0)}
+                          </p>
                         </div>
                         <p className="mt-0.5 text-sm text-gray-500">
                           Shipping and taxes calculated at checkout.
