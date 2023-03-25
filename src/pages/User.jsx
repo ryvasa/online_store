@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { IoMaleFemale } from "react-icons/io5";
 import {
@@ -9,16 +10,35 @@ import {
   MdPerson,
   MdSupervisedUserCircle,
 } from "react-icons/md";
-import { Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { Link, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Layout from "../components/Layout";
+import { refreshToken } from "../utils/refreshToken";
+import { getMe } from "../redux/api";
 
 const User = () => {
-  const urlPath = window.location.pathname;
-  const path = urlPath.substring(
-    urlPath.indexOf("/") + 1,
-    urlPath.indexOf("/", 1)
-  );
+  const dispatch = useDispatch();
+  const { id } = useParams();
+  const [user, setUser] = useState({});
+  const getUser = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/users/${id}`);
+      setUser(res.data.user);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    refreshToken().then(() => {
+      getUser();
+    });
+    console.log(id);
+  }, []);
+  useEffect(() => {
+    console.log(id);
+    getMe(dispatch);
+  }, []);
   return (
     <Layout>
       <div className="flex-[5] overflow-y-auto relative pt-3 w-full h-screen flex-col flex pb-16 bg-gradient-to-b from-white to-gray-200">
@@ -37,15 +57,19 @@ const User = () => {
           <div className="flex flex-col w-3/5 justify-center py-8 mb-5 border rounded-lg bg-white shadow-lg">
             <div className="flex  w-full justify-center">
               <img
-                src="https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                src={
+                  user.img
+                    ? user.img
+                    : "https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                }
                 alt=""
                 className="w-96 h-96 rounded-full object-cover"
               />
             </div>
-            <div className="flex w-full justify-center">
-              <div className="flex w-1/2 gap-2">
+            <div className="flex w-full justify-center py-5">
+              <div className="flex w-full px-5 gap-2">
                 <div className="flex-1">
-                  <ul className="flex gap-3 flex-col">
+                  <ul className="flex pl-20 gap-3 flex-col">
                     <li>
                       <div className="flex border-b border-transparent justify-between">
                         <span className="flex gap-1">
@@ -102,11 +126,12 @@ const User = () => {
 
                 <div className="flex-1">
                   <ul className="flex gap-3 flex-col">
-                    <li>ID</li>
-                    <li>Username</li>
-                    <li>Email</li>
-                    <li>Phone</li>
-                    <li>Role</li>
+                    <li>{user.uuid}</li>
+                    <li>{user.name}</li>
+                    <li>{user.email}</li>
+                    <li>{user.phone}</li>
+                    <li>{user.role}</li>
+                    <li>{user.gender}</li>
                   </ul>
                 </div>
               </div>
@@ -114,7 +139,7 @@ const User = () => {
             <div className="flex w-full px-10 pt-5 justify-between">
               <div className="flex-1 w-full flex  justify-start">
                 <Link
-                  to={`/${path}/:id/edit`}
+                  to={`/users/${user.uuid}/edit`}
                   className="flex gap-3 w-3/4 items-center justify-center rounded-md border-none bg-green-500 p-3 text-base font-medium text-white shadow-xl hover:bg-green-600"
                 >
                   <MdMode />

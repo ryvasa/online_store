@@ -3,61 +3,12 @@ import { StarIcon } from "@heroicons/react/20/solid";
 import { RadioGroup } from "@headlessui/react";
 import Footer from "../components/Footer";
 import { MdDeleteForever, MdMode } from "react-icons/md";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Layout from "../components/Layout";
+import axios from "axios";
+import { refreshToken } from "../utils/refreshToken";
+import { useEffect } from "react";
 
-const product = {
-  name: "Basic Tee 6-Pack",
-  price: "$192",
-  href: "#",
-  breadcrumbs: [
-    { id: 1, name: "Men", href: "#" },
-    { id: 2, name: "Clothing", href: "#" },
-  ],
-  images: [
-    {
-      src: "https://tailwindui.com/img/ecommerce-images/product-page-02-secondary-product-shot.jpg",
-      alt: "Two each of gray, white, and black shirts laying flat.",
-    },
-    {
-      src: "https://tailwindui.com/img/ecommerce-images/product-page-02-tertiary-product-shot-01.jpg",
-      alt: "Model wearing plain black basic tee.",
-    },
-    {
-      src: "https://tailwindui.com/img/ecommerce-images/product-page-02-tertiary-product-shot-02.jpg",
-      alt: "Model wearing plain gray basic tee.",
-    },
-    {
-      src: "https://tailwindui.com/img/ecommerce-images/product-page-02-featured-product-shot.jpg",
-      alt: "Model wearing plain white basic tee.",
-    },
-  ],
-  colors: [
-    { name: "White", class: "bg-white", selectedClass: "ring-gray-400" },
-    { name: "Gray", class: "bg-gray-200", selectedClass: "ring-gray-400" },
-    { name: "Black", class: "bg-gray-900", selectedClass: "ring-gray-900" },
-  ],
-  sizes: [
-    { name: "XXS", inStock: false },
-    { name: "XS", inStock: true },
-    { name: "S", inStock: true },
-    { name: "M", inStock: true },
-    { name: "L", inStock: true },
-    { name: "XL", inStock: true },
-    { name: "2XL", inStock: true },
-    { name: "3XL", inStock: true },
-  ],
-  description:
-    'The Basic Tee 6-Pack allows you to fully express your vibrant personality with three grayscale options. Feeling adventurous? Put on a heather gray tee. Want to be a trendsetter? Try our exclusive colorway: "Black". Need to add an extra pop of color to your outfit? Our white tee has you covered.',
-  highlights: [
-    "Hand cut and sewn locally",
-    "Dyed with our proprietary colors",
-    "Pre-washed & pre-shrunk",
-    "Ultra-soft 100% cotton",
-  ],
-  details:
-    'The 6-Pack includes two black, two white, and two heather gray Basic Tees. Sign up for our subscription service and be the first to get new, exciting colors, like our upcoming "Charcoal Gray" limited release.',
-};
 const reviews = { href: "#", average: 4, totalCount: 117 };
 
 function classNames(...classes) {
@@ -65,9 +16,25 @@ function classNames(...classes) {
 }
 
 const Product = () => {
-  const [selectedColor, setSelectedColor] = useState(product.colors[0]);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[2]);
-
+  const [stocks, setStocks] = useState([]);
+  const [product, setProduct] = useState({});
+  const { id } = useParams();
+  const getProduct = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/products/${id}`);
+      setProduct(res.data);
+      setStocks(res.data.stock);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const uniqueSizes = [...new Set(stocks?.map((stock) => stock.size))];
+  const uniqueColors = [...new Set(stocks?.map((stock) => stock.color))];
+  useEffect(() => {
+    refreshToken().then(() => {
+      getProduct();
+    });
+  }, []);
   return (
     <>
       <Layout>
@@ -76,27 +43,18 @@ const Product = () => {
             <div className="">
               {/* Image gallery */}
               <div className="mx-auto mt-6 max-w-2xl sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-3 lg:gap-x-8 lg:px-8">
-                <div className="aspect-w-3 aspect-h-4 hidden overflow-hidden rounded-lg lg:block">
-                  <img
-                    src={product.images[0].src}
-                    alt={product.images[0].alt}
-                    className="h-full w-full object-cover object-center"
-                  />
-                </div>
-                <div className="aspect-w-3 aspect-h-4 hidden overflow-hidden rounded-lg lg:block">
-                  <img
-                    src={product.images[0].src}
-                    alt={product.images[0].alt}
-                    className="h-full w-full object-cover object-center"
-                  />
-                </div>
-                <div className="aspect-w-4 aspect-h-5 sm:overflow-hidden sm:rounded-lg lg:aspect-w-3 lg:aspect-h-4">
-                  <img
-                    src={product.images[3].src}
-                    alt={product.images[3].alt}
-                    className="h-full w-full object-cover object-center"
-                  />
-                </div>
+                {product.img?.map((img, index) => (
+                  <div
+                    key={index}
+                    className="aspect-w-3 aspect-h-4 hidden overflow-hidden rounded-lg lg:block"
+                  >
+                    <img
+                      src={img}
+                      alt={img}
+                      className="h-full w-full object-cover object-center"
+                    />
+                  </div>
+                ))}
               </div>
 
               {/* Product info */}
@@ -111,7 +69,7 @@ const Product = () => {
                 <div className="mt-4 lg:row-span-3 lg:mt-0">
                   <h2 className="sr-only">Product information</h2>
                   <p className="text-3xl tracking-tight text-gray-900">
-                    {product.price}
+                    $ {product.price}
                   </p>
 
                   {/* Reviews */}
@@ -152,8 +110,8 @@ const Product = () => {
                       </h3>
 
                       <RadioGroup
-                        value={selectedColor}
-                        onChange={setSelectedColor}
+                        // value={selectedColor}
+                        // onChange={setSelectedColor}
                         className="mt-4"
                       >
                         <RadioGroup.Label className="sr-only">
@@ -161,13 +119,13 @@ const Product = () => {
                           Choose a color{" "}
                         </RadioGroup.Label>
                         <div className="flex items-center space-x-3">
-                          {product.colors.map((color) => (
+                          {uniqueColors?.map((color, index) => (
                             <RadioGroup.Option
-                              key={color.name}
+                              key={index}
                               value={color}
                               className={({ active, checked }) =>
                                 classNames(
-                                  color.selectedClass,
+                                  color,
                                   active && checked ? "ring ring-offset-1" : "",
                                   !active && checked ? "ring-2" : "",
                                   "relative -m-0.5 flex cursor-pointer items-center justify-center rounded-full p-0.5 focus:outline-none"
@@ -176,12 +134,12 @@ const Product = () => {
                             >
                               <RadioGroup.Label as="span" className="sr-only">
                                 {" "}
-                                {color.name}{" "}
+                                {color}{" "}
                               </RadioGroup.Label>
                               <span
                                 aria-hidden="true"
                                 className={classNames(
-                                  color.class,
+                                  color,
                                   "h-8 w-8 rounded-full border border-black border-opacity-10"
                                 )}
                               />
@@ -194,8 +152,8 @@ const Product = () => {
                     {/* Sizes */}
                     <div className="mt-10">
                       <RadioGroup
-                        value={selectedSize}
-                        onChange={setSelectedSize}
+                        // value={selectedSize}
+                        // onChange={setSelectedSize}
                         className="mt-4"
                       >
                         <RadioGroup.Label className="sr-only">
@@ -203,14 +161,14 @@ const Product = () => {
                           Choose a size{" "}
                         </RadioGroup.Label>
                         <div className="grid grid-cols-4 gap-4 sm:grid-cols-8 lg:grid-cols-4">
-                          {product.sizes.map((size) => (
+                          {uniqueSizes?.map((size, index) => (
                             <RadioGroup.Option
-                              key={size.name}
+                              key={index}
                               value={size}
-                              disabled={!size.inStock}
+                              disabled={!size}
                               className={({ active }) =>
                                 classNames(
-                                  size.inStock
+                                  size
                                     ? "cursor-pointer bg-white text-gray-900 shadow-sm"
                                     : "cursor-not-allowed bg-gray-50 text-gray-200",
                                   active ? "ring-2 ring-indigo-500" : "",
@@ -221,9 +179,9 @@ const Product = () => {
                               {({ active, checked }) => (
                                 <>
                                   <RadioGroup.Label as="span">
-                                    {size.name}
+                                    {size}
                                   </RadioGroup.Label>
-                                  {size.inStock ? (
+                                  {size ? (
                                     <span
                                       className={classNames(
                                         active ? "border" : "border-2",
@@ -265,7 +223,7 @@ const Product = () => {
                     <div className=" flex py-6 w-full ">
                       <div className="flex-1 w-full flex  justify-start">
                         <Link
-                          to={"/products/:id/edit"}
+                          to={`/products/${product.uuid}/edit`}
                           className="flex gap-3 w-11/12 items-center justify-center rounded-md border-none bg-green-500 p-2 text-base font-medium text-white shadow-xl hover:bg-green-600"
                         >
                           <MdMode />
@@ -291,61 +249,48 @@ const Product = () => {
                   <div className="my-5">
                     <h3 className="text-md font-medium">Stock</h3>
                     <div className="flex flex-col p-3">
-                      <div className="flex gap-5 items-center border-b p-2">
-                        <div className="w-1/5 ">
-                          <div className="flex gap-1 w-full justify-between">
-                            <span className="h-8 bg-gray-600 w-8 rounded-full border border-black border-opacity-10" />
-                            <span>gray</span>
+                      {product.stock?.map((stock) => (
+                        <div
+                          key={stock.uuid}
+                          className="flex gap-5 items-center border-b p-2"
+                        >
+                          <div className="w-1/5 ">
+                            <div className="flex gap-1 w-full justify-between">
+                              <span
+                                className={classNames(
+                                  stock.color,
+                                  "h-6 w-6 rounded-full border shadow-lg"
+                                )}
+                              />
+                              <span>{stock.color.split("-")[1]}</span>
+                            </div>
+                          </div>
+                          <div className="border-x px-3 border-gray-300">
+                            <div className="border flex p-2 h-9 w-9 rounded-md justify-center items-center">
+                              <div className="">{stock.size}</div>
+                            </div>
+                          </div>
+                          <div className="flex justify between w-1/2 gap-3 ">
+                            <div className="flex justify-between w-1/2">
+                              <span>Total stock</span>
+                              <span>:</span>
+                            </div>
+                            <div className="flex items-end justify-center gap-1">
+                              <span className="font-semibold text-lg">
+                                {stock.stock}
+                              </span>{" "}
+                              <span className="text-md font-light">pcs</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="border-x px-3 border-gray-300">
-                          <div className="border flex p-2 h-9 w-9 rounded-md justify-center items-center">
-                            <div className="">XL</div>
-                          </div>
-                        </div>
-                        <div className="flex justify between w-1/2 gap-3 ">
-                          <div className="flex justify-between w-1/2">
-                            <span>Total stock</span>
-                            <span>:</span>
-                          </div>
-                          <div className="flex items-end justify-center gap-1">
-                            <span className="font-semibold text-lg">56</span>{" "}
-                            <span className="text-md font-light">pcs</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-5 items-center border-b p-2">
-                        <div className="w-1/5 ">
-                          <div className="flex gap-1 w-full justify-between">
-                            <span className="h-8 bg-red-600 w-8 rounded-full border border-black border-opacity-10" />
-                            <span>red</span>
-                          </div>
-                        </div>
-                        <div className="border-x px-3 border-gray-300">
-                          <div className="border flex p-2 h-9 w-9 rounded-md justify-center items-center">
-                            <div className="">L</div>
-                          </div>
-                        </div>
-                        <div className="flex justify between w-1/2 gap-3 ">
-                          <div className="flex justify-between w-1/2">
-                            <span>Total stock</span>
-                            <span>:</span>
-                          </div>
-                          <div className="flex items-end justify-center gap-1">
-                            <span className="font-semibold text-lg">76</span>{" "}
-                            <span className="text-md font-light">pcs</span>
-                          </div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                   <div>
                     <h3 className="text-md font-semibold py-2">Description</h3>
 
                     <div className="space-y-6">
-                      <p className="text-base text-gray-900">
-                        {product.description}
-                      </p>
+                      <p className="text-base text-gray-900">{product.desc}</p>
                     </div>
                   </div>
 
@@ -359,9 +304,9 @@ const Product = () => {
                         role="list"
                         className="list-disc space-y-2 pl-4 text-sm"
                       >
-                        {product.highlights.map((highlight) => (
-                          <li key={highlight} className="text-gray-400">
-                            <span className="text-gray-600">{highlight}</span>
+                        {product.categories?.map((cat, index) => (
+                          <li key={index} className="text-gray-400">
+                            <span className="text-gray-600">{cat}</span>
                           </li>
                         ))}
                       </ul>
@@ -374,7 +319,7 @@ const Product = () => {
                     </h2>
 
                     <div className="mt-4 space-y-6">
-                      <p className="text-sm text-gray-600">{product.details}</p>
+                      <p className="text-sm text-gray-600">{product.detail}</p>
                     </div>
                   </div>
                 </div>

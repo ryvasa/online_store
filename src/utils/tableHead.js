@@ -5,16 +5,10 @@ export const productsHead = [
   "Stock",
   "Sold",
 ];
-export const usersHead = ["UserID", "Username", "Join", "Email", "Role"];
+export const usersHead = ["Username", "Join", "Email", "Role"];
 export const ordersHead = ["Date", "Username", "Total", "Quantity", "Status"];
-export const incomeHead = [
-  "ID transaction",
-  "Date",
-  "Username",
-  "Total",
-  "Quantity",
-];
+export const transactionsHead = ["ID transaction", "Date", "Username", "Total"];
 export const smallProductsHead = ["Product Name", "Price", "Stock"];
 export const smallUsersHead = ["Username", "Join"];
 export const smallOrdersHead = ["Date", "Total", "Quantity"];
-export const smallIncomeHead = ["Date", "Total", "Quantity"];
+export const smallTransactionsHead = ["Date", "Total", "Quantity"];

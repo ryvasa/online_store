@@ -2,11 +2,16 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { MdDeleteForever, MdLocalShipping } from "react-icons/md";
+import axios from "axios";
+import { useDispatch } from "react-redux";
+import { alertFailure, alertStart, alertSuccess } from "../redux/alertRedux";
 
-const Alert = ({ from }) => {
+const Alert = ({ id, from }) => {
   const [open, setOpen] = useState(false);
   const [color, setColor] = useState("");
   const [action, setAction] = useState("");
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (from === "orders") {
@@ -18,13 +23,49 @@ const Alert = ({ from }) => {
     }
   }, [from]);
 
+  const hendleDelete = async () => {
+    try {
+      handleOpen();
+      const response = await axios.delete(
+        `http://localhost:5000/${from}/${id}`
+      );
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const hendleOrder = async () => {
+    try {
+      handleOpen();
+      const response = await axios.put(`http://localhost:5000/${from}/${id}`, {
+        data: "confirm",
+      });
+
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleOpen = () => {
+    if (!open) {
+      dispatch(alertStart());
+      setOpen(true);
+      dispatch(alertSuccess(true));
+    } else {
+      setOpen(false);
+      dispatch(alertSuccess(false));
+    }
+    dispatch(alertFailure());
+  };
+
   const cancelButtonRef = useRef(null);
   const confirmButton = action.split(" ")[0];
   return (
     <>
       {from === "orders" ? (
         <button
-          onClick={(e) => setOpen(true)}
+          onClick={handleOpen}
           className="btn-xs normal-case text-white bg-green-500 hover:text-green-500 btn-ghost border-none btn"
         >
           <MdLocalShipping className="mr-1" />
@@ -32,7 +73,7 @@ const Alert = ({ from }) => {
         </button>
       ) : (
         <button
-          onClick={(e) => setOpen(true)}
+          onClick={handleOpen}
           className="btn-xs normal-case text-white bg-red-600 hover:text-red-600 btn-ghost border-none btn"
         >
           <MdDeleteForever className="mr-1" />
@@ -44,7 +85,7 @@ const Alert = ({ from }) => {
           as="div"
           className="relative z-10"
           initialFocus={cancelButtonRef}
-          onClose={setOpen}
+          onClose={handleOpen}
         >
           <Transition.Child
             as={Fragment}
@@ -99,17 +140,27 @@ const Alert = ({ from }) => {
                     </div>
                   </div>
                   <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                    <button
-                      type="button"
-                      className={`inline-flex w-full justify-center rounded-md bg-${color} px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto`}
-                      onClick={() => setOpen(false)}
-                    >
-                      {confirmButton}
-                    </button>
+                    {from === "orders" ? (
+                      <button
+                        type="button"
+                        className={`inline-flex w-full justify-center rounded-md bg-${color} px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto`}
+                        onClick={hendleOrder}
+                      >
+                        {confirmButton}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={`inline-flex w-full justify-center rounded-md bg-${color} px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto`}
+                        onClick={hendleDelete}
+                      >
+                        {confirmButton}
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                      onClick={() => setOpen(false)}
+                      onClick={handleOpen}
                       ref={cancelButtonRef}
                     >
                       Cancel

@@ -1,37 +1,126 @@
 import { useState } from "react";
-import { StarIcon } from "@heroicons/react/20/solid";
 import { RadioGroup } from "@headlessui/react";
 import Footer from "../components/Footer";
 import { MdImage, MdOutlineUpload } from "react-icons/md";
 import Layout from "../components/Layout";
+import { handleClickAddProduct } from "../utils/imageUpload";
+import { Link } from "react-router-dom";
 
-const reviews = { href: "#", average: 4, totalCount: 117 };
-
+const categories = [
+  "men",
+  "women",
+  "hat",
+  "shoes",
+  "casual",
+  "tshirt",
+  "sport",
+];
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 const colors = [
-  { name: "White", class: "bg-white", selectedClass: "ring-gray-400" },
-  { name: "Gray", class: "bg-gray-200", selectedClass: "ring-gray-400" },
-  { name: "Green", class: "bg-green-500", selectedClass: "ring-green-500" },
-  { name: "Red", class: "bg-red-600", selectedClass: "ring-red-600" },
-  { name: "Blue", class: "bg-blue-600", selectedClass: "ring-blue-600" },
-  {
-    name: "Yellow",
-    class: "bg-yellow-400",
-    selectedClass: "ring-yellow-400",
-  },
-  {
-    name: "Purple",
-    class: "bg-purple-600",
-    selectedClass: "ring-purple-600",
-  },
-  { name: "Black", class: "bg-black", selectedClass: "ring-black" },
+  "bg-white",
+  "bg-gray-200",
+  "bg-green-500",
+  "bg-red-600",
+  "bg-blue-600",
+  "bg-yellow-400",
+  "bg-purple-600",
+  "bg-black",
 ];
 const sizes = ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL"];
+
 const AddProduct = () => {
-  const [selectedColor, setSelectedColor] = useState(colors[0]);
-  const [selectedSize, setSelectedSize] = useState(sizes[2]);
+  const [selectedColor, setSelectedColor] = useState({});
+  const [selectedSize, setSelectedSize] = useState({});
+  const [selectedCat, setSelectedCat] = useState([]);
+  const [files, setFiles] = useState([]);
+  const [inputs, setInputs] = useState({});
+  const [inputsStock, setInputsStock] = useState(null);
+  const [previews, setPreviews] = useState([]);
+  const [message, setMessage] = useState("");
+  const [stockMessage, setStockMessage] = useState("");
+  const [id, setId] = useState("");
+  const [stock, setStock] = useState([]);
+  const loadImage = (e) => {
+    const images = e.target.files;
+    setFiles([...files, ...images]);
+    const previewsArray = Array.from(images).map((image) =>
+      URL.createObjectURL(image)
+    );
+    setPreviews([...previews, ...previewsArray]);
+  };
+  const handleCat = (event) => {
+    const value = event.target.value;
+    const currentIndex = selectedCat.indexOf(value);
+    const newSelectedCheckboxes = [...selectedCat];
+    if (currentIndex === -1) {
+      newSelectedCheckboxes.push(value);
+    } else {
+      newSelectedCheckboxes.splice(currentIndex, 1);
+    }
+    setSelectedCat(newSelectedCheckboxes);
+  };
+  const handleChange = (e) => {
+    setInputs((prev) => {
+      return { ...prev, [e.target.name]: e.target.value };
+    });
+  };
+
+  const addStock = () => {
+    const existingStockIndex = stock.findIndex(
+      (item) => item.color === selectedColor && item.size === selectedSize
+    );
+
+    if (existingStockIndex >= 0) {
+      const existingStock = stock[existingStockIndex];
+      const updatedStock = {
+        ...existingStock,
+        stock: existingStock.stock + parseInt(inputsStock),
+      };
+      if (inputsStock && selectedColor && selectedSize) {
+        setStock([
+          ...stock.slice(0, existingStockIndex),
+          updatedStock,
+          ...stock.slice(existingStockIndex + 1),
+        ]);
+        setStockMessage("");
+      } else {
+        setStockMessage("Color, size and stock is required");
+        return;
+      }
+    } else {
+      // Kombinasi warna dan ukuran belum ada di dalam daftar stock
+      if (inputsStock && selectedColor && selectedSize) {
+        setStock([
+          ...stock,
+          {
+            stock: parseInt(inputsStock),
+            color: selectedColor,
+            size: selectedSize,
+          },
+        ]);
+        setStockMessage("");
+      } else {
+        setStockMessage("Color, size and stock is required");
+        return;
+      }
+    }
+  };
+  const { price } = inputs;
+  const data = {
+    ...inputs,
+    price: parseInt(price),
+    stock,
+    categories: selectedCat,
+  };
+  const handleClick = () => {
+    const endpoint = "products";
+    handleClickAddProduct(endpoint, files, data, handleCallback);
+  };
+  const handleCallback = (response) => {
+    setMessage(response.data.message);
+  };
   return (
     <>
       <Layout>
@@ -42,46 +131,86 @@ const AddProduct = () => {
               <div className="mx-auto mt-6 max-w-2xl sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-3 lg:gap-x-8 lg:px-8">
                 <div className="aspect-w-3 aspect-h-4 hidden overflow-hidden rounded-lg lg:block relative">
                   <img
-                    src="https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                    src={
+                      previews
+                        ? previews[0]
+                        : "https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                    }
                     alt=""
-                    className="h-full w-full object-cover object-center relative"
+                    className="w-96 h-96  object-cover"
                   />
                   <div className="flex w-full px-10 py-5 justify-center absolute bottom-0 backdrop-blur-sm rounded-t-full shadow-lg">
                     <div className="flex-1 w-full flex  justify-center">
-                      <button className="flex gap-1 btn btn-sm justify-center border-none bg-indigo-600  text-white shadow-xl hover:bg-indigo-600">
+                      <input
+                        type="file"
+                        onChange={loadImage}
+                        id="img"
+                        style={{ display: "none" }}
+                        multiple
+                      />
+                      <label
+                        htmlFor="img"
+                        className="flex gap-1 btn btn-sm justify-center border-none bg-indigo-600  text-white shadow-xl hover:bg-indigo-600"
+                      >
                         <MdImage />
                         <span>Change Image</span>
-                      </button>
+                      </label>
                     </div>
                   </div>
                 </div>
                 <div className="aspect-w-3 aspect-h-4 hidden overflow-hidden rounded-lg lg:block relative">
                   <img
-                    src="https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                    src={
+                      previews
+                        ? previews[1]
+                        : "https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                    }
                     alt=""
-                    className="h-full w-full object-cover object-center relative"
+                    className="w-96 h-96  object-cover"
                   />
                   <div className="flex w-full px-10 py-5 justify-center absolute bottom-0 backdrop-blur-sm rounded-t-full shadow-lg">
                     <div className="flex-1 w-full flex  justify-center">
-                      <button className="flex gap-1 btn btn-sm justify-center border-none bg-indigo-600  text-white shadow-xl hover:bg-indigo-600">
+                      <input
+                        type="file"
+                        onChange={loadImage}
+                        id="img"
+                        style={{ display: "none" }}
+                      />
+                      <label
+                        htmlFor="img"
+                        className="flex gap-1 btn btn-sm justify-center border-none bg-indigo-600  text-white shadow-xl hover:bg-indigo-600"
+                      >
                         <MdImage />
                         <span>Change Image</span>
-                      </button>
+                      </label>
                     </div>
                   </div>
                 </div>
                 <div className="aspect-w-4 aspect-h-5 sm:overflow-hidden sm:rounded-lg lg:aspect-w-3 lg:aspect-h-4 relative">
                   <img
-                    src="https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                    src={
+                      previews
+                        ? previews[2]
+                        : "https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                    }
                     alt=""
-                    className="h-full w-full object-cover object-center relative"
+                    className="w-96 h-96  object-cover"
                   />
                   <div className="flex w-full px-10 py-5 justify-center absolute bottom-0 backdrop-blur-sm rounded-t-full shadow-lg">
                     <div className="flex-1 w-full flex  justify-center">
-                      <button className="flex gap-1 btn btn-sm justify-center border-none bg-indigo-600  text-white shadow-xl hover:bg-indigo-600">
+                      <input
+                        type="file"
+                        onChange={loadImage}
+                        id="img"
+                        style={{ display: "none" }}
+                      />
+                      <label
+                        htmlFor="img"
+                        className="flex gap-1 btn btn-sm justify-center border-none bg-indigo-600  text-white shadow-xl hover:bg-indigo-600"
+                      >
                         <MdImage />
                         <span>Change Image</span>
-                      </button>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -95,6 +224,8 @@ const AddProduct = () => {
                       <span>:</span>
                     </div>
                     <input
+                      name="name"
+                      onChange={handleChange}
                       type="text"
                       placeholder="Product name"
                       className="bg-transparent outline-none border-b flex-1"
@@ -106,6 +237,8 @@ const AddProduct = () => {
                       <span>:</span>
                     </div>
                     <input
+                      name="price"
+                      onChange={handleChange}
                       type="number"
                       placeholder="$ 99"
                       className="bg-transparent outline-none border-b flex-1"
@@ -117,6 +250,8 @@ const AddProduct = () => {
                       <span>:</span>
                     </div>
                     <input
+                      name="desc"
+                      onChange={handleChange}
                       type="text"
                       placeholder="Description"
                       className="bg-transparent outline-none border-b flex-1"
@@ -128,81 +263,87 @@ const AddProduct = () => {
                       <span>:</span>
                     </div>
                     <input
+                      name="detail"
+                      onChange={handleChange}
                       type="text"
                       placeholder="Detail"
                       className="bg-transparent outline-none border-b flex-1"
                     />
                   </div>
-                  <div className="flex w-full gap-3">
+                  <div className="flex flex-col w-full gap-3">
                     <div className="flex justify-between  text-md font-medium border-b border-transparent flex-1">
                       <span>Category</span>
-                      <span>:</span>
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Category"
-                      className="bg-transparent outline-none border-b flex-1"
-                    />
+                    <div className="w-full grid grid-cols-2">
+                      {categories.map((cat, index) => (
+                        <div className="flex gap-3" key={index}>
+                          <input
+                            type="checkbox"
+                            onChange={handleCat}
+                            value={cat}
+                            multiple
+                            name="categories"
+                            id="categories"
+                            className="checkbox "
+                          />
+                          <label className="p-1">{cat}</label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
+                {/* Stock */}
                 <div className="flex-1 p-2 border-x">
                   <div className="flex justify-between gap-2">
-                    <div className="flex justify-between w-full text-md font-medium flex-1">
+                    <div className="flex justify-between w-full text-md font-medium ">
                       <span>Total Stock</span>
                       <span>:</span>
                     </div>
-                    <div className="flex gap-2 flex-1">
-                      <span className="font-bold text-lg">58</span>
+                    <div className="flex gap-2 ">
+                      <span className="font-bold text-lg">
+                        {stock.reduce((total, item) => {
+                          return total + item.stock;
+                        }, 0)}
+                      </span>
                       <span className="text md font-light">pcs</span>
                     </div>
                   </div>
                   <div className="flex flex-col">
-                    <div className="flex gap-5 items-center border-b p-2">
-                      <div className="w-1/5 ">
-                        <div className="flex gap-1 w-full justify-between">
-                          <span className="h-8 bg-red-600 w-8 rounded-full border border-black border-opacity-10" />
-                          <span>red</span>
+                    {stock.map((s, index) => (
+                      <div
+                        className="flex gap-5 items-center border-b p-1"
+                        key={index}
+                      >
+                        <div className="flex-1 flex w-full justify-center">
+                          <div className="flex gap-1 w-full justify-between">
+                            <span
+                              className={classNames(
+                                s.color,
+                                "h-5 w-5 rounded-full border border-black border-opacity-10"
+                              )}
+                            />
+                            <span>{s.color.split("-")[1]}</span>
+                          </div>
+                        </div>
+                        <div className="border-x px-3 border-gray-300 flex-1 flex w-full justify-center">
+                          <div className="border flex p-2 h-9 w-9 rounded-md justify-center items-center">
+                            <div className="">{s.size}</div>
+                          </div>
+                        </div>
+                        <div className="justify between  gap-3 flex-1 flex w-full justify-center">
+                          <div className="flex justify-between w-1/2">
+                            <span>Stock</span>
+                            <span>:</span>
+                          </div>
+                          <div className="flex items-end justify-center gap-1">
+                            <span className="font-semibold text-lg">
+                              {s.stock}
+                            </span>
+                            <span className="text-md font-light">pcs</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="border-x px-3 border-gray-300">
-                        <div className="border flex p-2 h-9 w-9 rounded-md justify-center items-center">
-                          <div className="">L</div>
-                        </div>
-                      </div>
-                      <div className="flex justify between w-1/2 gap-3 ">
-                        <div className="flex justify-between w-1/2">
-                          <span>Stock</span>
-                          <span>:</span>
-                        </div>
-                        <div className="flex items-end justify-center gap-1">
-                          <span className="font-semibold text-lg">76</span>
-                          <span className="text-md font-light">pcs</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-5 items-center border-b p-2">
-                      <div className="w-1/5 ">
-                        <div className="flex gap-1 w-full justify-between">
-                          <span className="h-8 bg-red-600 w-8 rounded-full border border-black border-opacity-10" />
-                          <span>red</span>
-                        </div>
-                      </div>
-                      <div className="border-x px-3 border-gray-300">
-                        <div className="border flex p-2 h-9 w-9 rounded-md justify-center items-center">
-                          <div className="">L</div>
-                        </div>
-                      </div>
-                      <div className="flex justify between w-1/2 gap-3 ">
-                        <div className="flex justify-between w-1/2">
-                          <span>Stock</span>
-                          <span>:</span>
-                        </div>
-                        <div className="flex items-end justify-center gap-1">
-                          <span className="font-semibold text-lg">76</span>
-                          <span className="text-md font-light">pcs</span>
-                        </div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
                 <div className="flex-1 w-full p-2 flex flex-col">
@@ -225,7 +366,7 @@ const AddProduct = () => {
                             value={color}
                             className={({ active, checked }) =>
                               classNames(
-                                color.selectedClass,
+                                color,
                                 active && checked ? "ring ring-offset-1" : "",
                                 !active && checked ? "ring-2" : "",
                                 "relative -m-0.5 flex cursor-pointer items-center h-fit w-fit justify-center rounded-full p-0.5 focus:outline-none"
@@ -233,12 +374,12 @@ const AddProduct = () => {
                             }
                           >
                             <RadioGroup.Label as="span" className="sr-only">
-                              {color.name}
+                              {color}
                             </RadioGroup.Label>
                             <span
                               aria-hidden="true"
                               className={classNames(
-                                color.class,
+                                color.split("-")[1],
                                 "h-8 w-8 rounded-full border border-black border-opacity-10"
                               )}
                             />
@@ -302,24 +443,51 @@ const AddProduct = () => {
                         <span className="flex-1">:</span>
                       </div>
                       <input
+                        onChange={(e) => setInputsStock(e.target.value)}
+                        name="stock"
                         type="number"
                         className="bg-transparent outline-none flex-1 border-b"
                         placeholder="stock"
                       />
                     </div>
                   </div>
+                  {stockMessage && (
+                    <div className="w-full  flex justify-center items-center py-5">
+                      <div className="w-11/12 rounded-lg p-2 flex justify-center items-center bg-red-300">
+                        <div className="text-red-700">{stockMessage}</div>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex w-full px-10 pt-5 justify-center">
-                    <button className="flex border-none bg-indigo-600  btn btn-sm font-medium text-white shadow-xl hover:bg-indigo-600">
+                    <button
+                      onClick={addStock}
+                      className="flex border-none bg-indigo-600  btn btn-sm font-medium text-white shadow-xl hover:bg-indigo-600"
+                    >
                       <MdOutlineUpload className="h-5 w-5" />
                       <span>Add to Stock</span>
                     </button>
                   </div>
                 </div>
               </div>
+              {message && (
+                <Link
+                  to={`/products`}
+                  className="w-full  flex justify-center items-center py-5"
+                >
+                  <div className="w-11/12 rounded-lg p-2 flex justify-center items-center bg-green-300">
+                    <div className="text-green-700">
+                      {message}, <u>Back to products list</u>
+                    </div>
+                  </div>
+                </Link>
+              )}
               <div className="flex w-full px-10 pb-5 justify-center">
-                <button className="flex gap-1 border-none bg-indigo-600 p-3 btn font-medium text-white shadow-xl hover:bg-indigo-600">
+                <button
+                  onClick={handleClick}
+                  className="flex gap-1 border-none bg-indigo-600 p-3 btn font-medium text-white shadow-xl hover:bg-indigo-600"
+                >
                   <MdOutlineUpload className="h-5 w-5" />
-                  <span>Update</span>
+                  <span>Add product</span>
                 </button>
               </div>
             </div>

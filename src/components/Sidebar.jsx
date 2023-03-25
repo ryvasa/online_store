@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   MdSpaceDashboard,
   MdPerson,
@@ -7,9 +8,31 @@ import {
   MdOutlineBarChart,
   MdLogout,
   MdChat,
+  MdImage,
 } from "react-icons/md";
+import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+import {
+  signOutFailure,
+  signOutStart,
+  signOutSuccess,
+} from "../redux/userRedux";
 const Sidebar = () => {
+  const dispatch = useDispatch();
+  const handleClick = async (e) => {
+    e.preventDefault();
+    signOut(dispatch);
+  };
+  const signOut = async (dispatch) => {
+    dispatch(signOutStart());
+    try {
+      const res = await axios.delete("http://localhost:5000/signout");
+      dispatch(signOutSuccess(res.data));
+    } catch (error) {
+      console.log(error);
+      dispatch(signOutFailure());
+    }
+  };
   return (
     <>
       <div className="flex-1 h-screen border-r-2 hidden lg:block bg-white">
@@ -29,7 +52,7 @@ const Sidebar = () => {
             <span>Statistics</span>
           </Link>
           <Link
-            to={"/income"}
+            to={"/transactions"}
             className="group flex justify-start gap-2 pl-6 items-center font-medium text-md hover:text-white hover:bg-indigo-600 rounded-md p-2 mx-1"
           >
             <MdLocalAtm className="w-6 h-6 text-indigo-700 group-hover:text-white" />
@@ -64,10 +87,20 @@ const Sidebar = () => {
             <MdLocalShipping className="w-6 h-6 text-indigo-700 group-hover:text-white" />
             <span>Order</span>
           </Link>
-          <Link className="group flex justify-start gap-2 pl-6 items-center font-medium text-md hover:text-white hover:bg-indigo-600 rounded-md p-2 mx-1">
+          <Link
+            to={"/slide&preview"}
+            className="group flex justify-start gap-2 pl-6 items-center font-medium text-md hover:text-white hover:bg-indigo-600 rounded-md p-2 mx-1"
+          >
+            <MdImage className="w-6 h-6 text-indigo-700 group-hover:text-white" />
+            <span>Slide & Preview</span>
+          </Link>
+          <button
+            onClick={handleClick}
+            className="group flex justify-start gap-2 pl-6 items-center font-medium text-md hover:text-white hover:bg-indigo-600 rounded-md p-2 mx-1"
+          >
             <MdLogout className="w-6 h-6 text-indigo-700 group-hover:text-white" />
             <span>Logout</span>
-          </Link>
+          </button>
         </div>
       </div>
     </>

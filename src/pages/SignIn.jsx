@@ -1,6 +1,44 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { getMe } from "../redux/api";
 
-const Login = () => {
+const SignIn = () => {
+  const user = useSelector((state) => state.user.currentUser);
+  const [inputs, setInputs] = useState({});
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleChange = (e) => {
+    setInputs((prev) => {
+      return { ...prev, [e.target.name]: e.target.value };
+    });
+    setError("");
+  };
+  const handleClick = async (e) => {
+    try {
+      e.preventDefault();
+      const res = await axios.post(
+        "http://localhost:5000/admin/signin",
+        inputs
+      );
+      localStorage.setItem("token", JSON.stringify(res.data.token));
+
+      if (res) {
+        getMe(dispatch);
+      }
+    } catch (error) {
+      console.log(error);
+      setError(error.response.data.message);
+    }
+  };
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user]);
   return (
     <div>
       <div className="hero min-h-screen bg-gradient-to-b from-gray-300 to-gray-200 relative">
@@ -19,14 +57,21 @@ const Login = () => {
           <div className="card flex-shrink-0 w-4/12 h-1/2 shadow-2xl bg-base-100">
             <div className="card-body">
               <div className="flex justify-center items-center text-4xl font-bold text-indigo-600">
-                Login
+                SignIn
               </div>
+              {error && (
+                <div className="flex w-full text-md h-10 items-center text-center bg-red-200 rounded-lg justify-center font-medium text-red-600">
+                  {error}
+                </div>
+              )}
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">Email</span>
                 </label>
                 <input
-                  type="text"
+                  name="email"
+                  onChange={handleChange}
+                  type="email"
                   placeholder="email"
                   className="input input-bordered"
                 />
@@ -36,13 +81,17 @@ const Login = () => {
                   <span className="label-text">Password</span>
                 </label>
                 <input
-                  type="text"
+                  name="password"
+                  onChange={handleChange}
+                  type="password"
                   placeholder="password"
                   className="input input-bordered"
                 />
               </div>
               <div className="form-control mt-6">
-                <button className="btn btn-primary">Login</button>
+                <button className="btn btn-primary" onClick={handleClick}>
+                  SignIn
+                </button>
               </div>
             </div>
           </div>
@@ -52,4 +101,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default SignIn;
