@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 // add user
 export const addUser = async (req, res) => {
-  const { password, confirmPassword, role, email, name, phone, gender } =
+  const { password, confirmPassword, img, role, email, name, phone, gender } =
     req.body;
   if (password !== confirmPassword)
     return res.status(400).json({ message: "Password and confirm not match" });
@@ -20,6 +20,7 @@ export const addUser = async (req, res) => {
         gender: gender,
         role: role,
         password: hashPassword,
+        img: img,
       },
     });
     res.status(200).json({ message: "User Added", id: user.uuid });
@@ -77,6 +78,7 @@ export const getAllUser = async (req, res) => {
         gender: true,
         img: true,
         role: true,
+        createdAt: true,
       },
       skip: offset,
       take: limit,
@@ -107,6 +109,7 @@ export const getUserById = async (req, res) => {
         phone: true,
         img: true,
         gender: true,
+        role: true,
       },
     });
     if (!user) {
@@ -182,6 +185,23 @@ export const deleteUser = async (req, res) => {
     });
     res.status(200).json({ message: "User has been deleted" });
   } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+// get user stats
+export const getUserStats = async (req, res) => {
+  try {
+    const result =
+      await prisma.$queryRaw`SELECT MONTH(createdAt) as Month, YEAR(createdAt) as Year, COUNT(*) as New_Join_User FROM User GROUP BY YEAR(createdAt), MONTH(createdAt) ORDER BY YEAR(createdAt) ASC, MONTH(createdAt) ASC`;
+    const data = result.map((item) => ({
+      Month: item.Month,
+      Year: item.Year,
+      New_Join_User: parseInt(item.New_Join_User),
+    }));
+    res.status(200).json(data);
+    return;
+  } catch (error) {
+    console.log(error);
     return res.status(500).json(error);
   }
 };

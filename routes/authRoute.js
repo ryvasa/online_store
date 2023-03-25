@@ -1,6 +1,7 @@
 import express from "express";
 import { onlyAdmin, verifyToken } from "../middleware/verifyUser.js";
 import {
+  adminSignIn,
   getFirst,
   getMe,
   signIn,
@@ -10,7 +11,8 @@ import {
 const router = express.Router();
 router.post("/signup", signUp);
 router.post("/signin", signIn);
-router.delete("/signout", signOut);
+router.post("/admin/signin", adminSignIn);
+router.delete("/signout/:id", signOut);
 router.get("/me", verifyToken, getMe);
 router.get("/first/:id", getFirst);
 export default router;

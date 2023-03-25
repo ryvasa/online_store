@@ -23,9 +23,25 @@ export const addCatPreview = async (req, res) => {
 export const getCatPreview = async (req, res) => {
   try {
     const preview = await prisma.category_preview.findMany({});
-    res.status(200).json(preview);
+    res.status(200).json({ result: preview });
   } catch (error) {
     console.log(error);
+    return res.status(500).json(error);
+  }
+};
+// get preview by id
+export const getCatPreviewById = async (req, res) => {
+  try {
+    const preview = await prisma.category_preview.findUnique({
+      where: {
+        uuid: req.params.id,
+      },
+    });
+    if (!preview) {
+      return res.status(404).json({ message: "Preview not found" });
+    }
+    res.status(200).json(preview);
+  } catch (error) {
     return res.status(500).json(error);
   }
 };

@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 import jwt from "jsonwebtoken";
+import Stripe from "stripe";
 
 export const addOrder = async (req, res) => {
   try {
@@ -26,19 +27,26 @@ export const addOrder = async (req, res) => {
       return res.status(400).json({ message: "Product not avaible" });
     } else {
       try {
-        const createOrder = await prisma.order.create({
-          data: {
-            user_id: userId,
-            totalPrice: total._sum.price,
-            totalQuantity: total._sum.quantity,
-            name: req.body.name,
-            country: req.body.country,
-            city: req.body.city,
-            address: req.body.address,
-            postal_code: req.body.postal_code,
-          },
-        });
-        if (createOrder) {
+        await prisma.$transaction(async (tx) => {
+          const createOrder = await prisma.order.create({
+            data: {
+              user_id: userId,
+              totalPrice: total._sum.price,
+              totalQuantity: total._sum.quantity,
+              name: req.body.name,
+              country: req.body.country,
+              city: req.body.city,
+              address: req.body.address,
+              postal_code: req.body.postal_code,
+            },
+          });
+          const stripe = new Stripe(process.env.STRIPE);
+          const response = await stripe.charges.create({
+            source: req.body.tokenId,
+            amount: total._sum.price * 100,
+            currency: "usd",
+          });
+
           const updateCarts = await prisma.cart.updateMany({
             data: { order_id: createOrder.uuid },
             where: {
@@ -47,23 +55,65 @@ export const addOrder = async (req, res) => {
               order_id: null,
             },
           });
-          res
-            .status(200)
-            .json({ createdOrder: createOrder, updateCarts: updateCarts });
-        } else {
-          res.status(500).json({ message: "Order failed" });
-        }
+          const carts = await prisma.cart.findMany({
+            where: { order_id: createOrder.uuid },
+          });
+          for (const cart of carts) {
+            const updateSoldProduct = await prisma.product.update({
+              data: { sold: { increment: cart.quantity } },
+              where: { uuid: cart.product_id },
+            });
+          }
+          res.status(200).json({
+            carts: carts,
+            createdOrder: createOrder,
+            updateCarts: updateCarts,
+          });
+        });
       } catch (error) {
         console.log(error);
         res.status(500).json(error);
       }
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
 };
 
 export const getAllOrder = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 0;
+    const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || "";
+    const offset = limit * page;
+    const totalRows = await prisma.order.count({
+      where: {
+        OR: [
+          {
+            name: {
+              contains: search,
+            },
+          },
+          {
+            country: {
+              contains: search,
+            },
+          },
+          {
+            city: {
+              contains: search,
+            },
+          },
+          {
+            address: {
+              contains: search,
+            },
+          },
+        ],
+      },
+    });
+    const totalPage = Math.ceil(totalRows / limit);
     const orders = await prisma.order.findMany({
       where: {
         OR: [
@@ -87,33 +137,23 @@ export const getAllOrder = async (req, res) => {
               contains: search,
             },
           },
-          {
-            postal_code: {
-              equals: parseInt(search),
-            },
-          },
         ],
       },
-      include: {
-        cart: {
-          include: {
-            product: {
-              select: {
-                name: true,
-                price: true,
-              },
-            },
-            stock: {
-              select: {
-                color: true,
-                size: true,
-              },
-            },
-          },
-        },
+      select: {
+        uuid: true,
+        name: true,
+        totalPrice: true,
+        totalQuantity: true,
+        status: true,
+        createdAt: true,
+      },
+      skip: offset,
+      take: limit,
+      orderBy: {
+        id: "desc",
       },
     });
-    res.status(200).json(orders);
+    res.json({ result: orders, page, limit, totalRows, totalPage });
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
@@ -153,6 +193,9 @@ export const getOrderByUserId = async (req, res) => {
           },
         },
       },
+      orderBy: {
+        id: "desc",
+      },
     });
     res.status(200).json(orders);
   } catch (error) {
@@ -165,13 +208,31 @@ export const getOrderById = async (req, res) => {
   try {
     const order = await prisma.order.findUnique({
       where: { uuid: req.params.id },
-      include: {
+      select: {
+        uuid: true,
+        name: true,
+        totalPrice: true,
+        totalQuantity: true,
+        country: true,
+        city: true,
+        address: true,
+        postal_code: true,
+        status: true,
+        createdAt: true,
+        user: {
+          select: {
+            phone: true,
+          },
+        },
         cart: {
-          include: {
+          select: {
+            quantity: true,
+            price: true,
             product: {
               select: {
                 name: true,
                 price: true,
+                img: true,
               },
             },
             stock: {
@@ -246,5 +307,21 @@ export const updateOrderStatus = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
+  }
+};
+export const getOrderStats = async (req, res) => {
+  try {
+    const result =
+      await prisma.$queryRaw`SELECT MONTH(createdAt) as Month, YEAR(createdAt) as Year, COUNT(*) as Total_Order FROM online_store.Order GROUP BY YEAR(createdAt), MONTH(createdAt) ORDER BY YEAR(createdAt) ASC, MONTH(createdAt) ASC`;
+    const data = result.map((item) => ({
+      Month: item.Month,
+      Year: item.Year,
+      Total_Order: parseInt(item.Total_Order),
+    }));
+    res.status(200).json(data);
+    return;
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
   }
 };

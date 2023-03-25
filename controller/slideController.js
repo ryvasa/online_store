@@ -21,12 +21,29 @@ export const addSlide = async (req, res) => {
 export const getSlide = async (req, res) => {
   try {
     const slide = await prisma.slide.findMany({});
-    res.status(200).json(slide);
+    res.status(200).json({ result: slide });
   } catch (error) {
     console.log(error);
     return res.status(500).json(error);
   }
 };
+// get slide by id
+export const getSlideById = async (req, res) => {
+  try {
+    const slide = await prisma.slide.findUnique({
+      where: {
+        uuid: req.params.id,
+      },
+    });
+    if (!slide) {
+      return res.status(404).json({ message: "Slide not found" });
+    }
+    res.status(200).json(slide);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
 // update slide
 export const updateSlide = async (req, res) => {
   const slide = await prisma.slide.findUnique({

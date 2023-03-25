@@ -16,8 +16,8 @@ model User {
   name          String   @unique
   email         String   @unique
   password      String
-  phone         Int
-  img           String?
+  phone         String
+  img           String?  @db.Text
   role          String?   @default("user")
   gender        String
   refresh_token String? @db.Text
@@ -36,6 +36,7 @@ model Product {
   detail     String
   desc       String
   price      Int
+  sold      Int @default(0)
   rating     Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -53,7 +54,7 @@ model Cart {
   price      Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  product      Product @relation(fields: [product_id], references: [uuid])
+  product      Product @relation(fields: [product_id], references: [uuid],onDelete: Cascade)
   stock      Stock @relation(fields: [stock_id], references: [uuid])
   user       User @relation(fields: [user_id], references: [uuid])
   order       Order? @relation(fields: [order_id], references: [uuid])
@@ -67,7 +68,7 @@ model Stock {
   stock      Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  product    Product @relation(fields: [product_id], references: [uuid])
+  product    Product @relation(fields: [product_id], references: [uuid],onDelete: Cascade)
   cart        Cart[]
 }
 model Order {
@@ -91,7 +92,7 @@ model Order {
 model Slide {
   id         Int     @id @default(autoincrement())
   uuid       String  @unique @default(uuid())
-  img         String
+  img         String  @db.Text
   title       String
   detail      String
   createdAt DateTime @default(now())
@@ -100,7 +101,7 @@ model Slide {
 model Category_preview {
   id         Int     @id @default(autoincrement())
   uuid       String  @unique @default(uuid())
-  img         String
+  img         String  @db.Text
   title       String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -3,13 +3,15 @@ import {
   deleteTransaction,
   getAllTransaction,
   getTransactionById,
+  getTransactionStats,
 } from "../controller/transactionController.js";
 import { onlyAdmin } from "../middleware/verifyUser.js";
 
 const router = express.Router();
 
-router.get("/transaction", onlyAdmin, getAllTransaction);
-router.get("/transaction/:id", onlyAdmin, getTransactionById);
-router.delete("/transaction/:id", onlyAdmin, deleteTransaction);
+router.get("/transactions", onlyAdmin, getAllTransaction);
+router.get("/transactions/stats", onlyAdmin, getTransactionStats);
+router.get("/transactions/:id", onlyAdmin, getTransactionById);
+router.delete("/transactions/:id", onlyAdmin, deleteTransaction);
 
 export default router;

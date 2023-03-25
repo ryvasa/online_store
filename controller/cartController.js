@@ -44,6 +44,9 @@ export const addCart = async (req, res) => {
               {
                 stock_id: product.stock[0].uuid,
               },
+              {
+                order_id: null,
+              },
             ],
           },
           include: {
@@ -52,6 +55,7 @@ export const addCart = async (req, res) => {
           },
         });
         if (cart) {
+          // update
           if (product.stock[0].stock === 0) {
             return res.status(400).json({ message: "Out of stock" });
           }
@@ -77,6 +81,7 @@ export const addCart = async (req, res) => {
             res.status(500).json(error);
           }
         } else {
+          // add
           try {
             const updateStock = prisma.stock.update({
               data: { stock: { decrement: quantity } },
@@ -128,7 +133,9 @@ export const getAllProductOnCart = async (req, res) => {
       }
       try {
         const cart = await prisma.cart.findMany({
-          where: { user_id: decodedToken.id },
+          where: {
+            AND: [{ user_id: decodedToken.id }, { order_id: null }],
+          },
           include: {
             product: true,
             stock: true,
