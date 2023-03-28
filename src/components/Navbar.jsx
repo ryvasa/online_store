@@ -7,14 +7,17 @@ import {
   signOutSuccess,
 } from "../redux/userRedux";
 import axios from "axios";
+import { useEffect } from "react";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const user = useSelector((state) => state.user.currentUser);
-  if (!user) {
-    navigate("/signin");
-    return;
-  }
+  const user = useSelector((state) => state.user?.currentUser);
+  useEffect(() => {
+    if (!user) {
+      navigate("/signin");
+      return;
+    }
+  }, [user]);
   const dispatch = useDispatch();
   const handleClick = async (e) => {
     e.preventDefault();
@@ -62,7 +65,7 @@ const Navbar = () => {
             className="mt-3 p-2 shadow menu menu-compact dropdown-content bg-base-100 rounded-box w-52"
           >
             <li>
-              <Link to={`/users/${user.uuid}`}>
+              <Link to={`/users/${user?.uuid}`}>
                 <MdPerson className="lg:h-6 lg:w-6 h-4 w-4 text-indigo-700" />
                 Profile
               </Link>

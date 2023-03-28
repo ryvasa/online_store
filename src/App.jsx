@@ -40,6 +40,7 @@ function App() {
         <Route path="/transactions/:id" element={<Transaction />} />
         <Route path="/statistics" element={<Statistics />} />
         <Route path="/chat" element={<Chat />} />
+        <Route path="/chat/:id" element={<Chat />} />
         <Route path="/slide&preview" element={<SlidePreview />} />
         <Route path="/slide/:id" element={<EditSlide />} />
         <Route path="/preview/:id" element={<EditPreview />} />
