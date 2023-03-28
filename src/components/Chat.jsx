@@ -1,39 +1,59 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { IoSend } from "react-icons/io5";
 import { MdHeadsetMic } from "react-icons/md";
-
-const products = [
-  {
-    id: 1,
-    name: "Throwback Hip Bag",
-    href: "#",
-    color: "Salmon",
-    price: "$90.00",
-    quantity: 1,
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/shopping-cart-page-04-product-01.jpg",
-    imageAlt:
-      "Salmon orange fabric pouch with match zipper, gray zipper pull, and adjustable hip belt.",
-  },
-  {
-    id: 2,
-    name: "Medium Stuff Satchel",
-    href: "#",
-    color: "Blue",
-    price: "$32.00",
-    quantity: 1,
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/shopping-cart-page-04-product-02.jpg",
-    imageAlt:
-      "Front of satchel with blue canvas body, black straps and handle, drawstring top, and front zipper pouch.",
-  },
-  // More products...
-];
+import { refreshToken } from "../utils/refreshToken";
+import axios from "axios";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 const Chat = ({ type }) => {
+  const data = JSON.parse(localStorage.getItem("user"));
   const [open, setOpen] = useState(false);
+  const [chat, setChat] = useState({});
+  const [message, setMessage] = useState("");
+  const getChat = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/chats/client");
+      setChat(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const sendMessage = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/messages", {
+        message,
+        chat_id: chat.uuid,
+      });
+      console.log(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    if (open === true) {
+      refreshToken().then(() => {
+        getChat();
+      });
+    }
+  }, [open]);
+  dayjs.extend(relativeTime);
+  const handleClick = (e) => {
+    refreshToken().then(() => {
+      sendMessage().then(() => {
+        setMessage("");
+        getChat();
+      });
+    });
+  };
+
+  const scrollRef = useRef(null);
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chat]);
+
   return (
     <>
       <div className="group">
@@ -82,7 +102,7 @@ const Chat = ({ type }) => {
                 >
                   <Dialog.Panel className="pointer-events-auto w-screen max-w-xl ">
                     <div className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
-                      <div className="flex-1 overflow-y-auto py-3 px-2">
+                      <div className="flex-1 overflow-y-auto  bg-gray-200 py-3 px-2">
                         <div className="flex items-start justify-between">
                           <Dialog.Title className="text-lg font-medium text-gray-900">
                             Customor Service
@@ -102,58 +122,77 @@ const Chat = ({ type }) => {
                           </div>
                         </div>
 
-                        <div className="mt-3 rounded-md h-full bg-gray-200 p-3">
+                        <div className="mt-3 h-full p-3">
                           <div className="flow-root">
-                            <div className="chat chat-start ">
-                              <div className="chat-image avatar">
-                                <div className="w-10 rounded-full">
-                                  <img src="https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif" />
+                            {chat.message?.map((message) =>
+                              data.uuid === message.user_id ? (
+                                <div className="chat chat-end">
+                                  <div className="chat-image avatar">
+                                    <div className="w-10 rounded-full">
+                                      <img
+                                        src={
+                                          message.user?.img
+                                            ? message.user?.img
+                                            : "https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="chat-header">
+                                    {message.user?.name}
+                                  </div>
+                                  <div className="chat-bubble  bg-teal-600 text-white">
+                                    {message.message}
+                                  </div>
+                                  <div className="chat-footer">
+                                    <time className="text-xs opacity-50">
+                                      {dayjs(message.createdAt).fromNow()}
+                                    </time>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="chat-header">
-                                Obi-Wan Kenobi
-                                <time className="text-xs opacity-50">
-                                  12:45
-                                </time>
-                              </div>
-                              <div className="chat-bubble bg-white text-teal-600 ">
-                                You were the Chosen One!
-                              </div>
-                              <div className="chat-footer opacity-50">
-                                Delivered
-                              </div>
-                            </div>
-                            <div className="chat chat-end">
-                              <div className="chat-image avatar">
-                                <div className="w-10 rounded-full">
-                                  <img src="https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif" />
+                              ) : (
+                                <div className="chat chat-start ">
+                                  <div className="chat-image avatar">
+                                    <div className="w-10 rounded-full">
+                                      <img
+                                        src={
+                                          message.user?.img
+                                            ? message.user?.img
+                                            : "https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="chat-header">
+                                    {message.user?.name}
+                                  </div>
+                                  <div className="chat-bubble bg-white text-teal-600 ">
+                                    {message.message}
+                                  </div>
+                                  <div className="chat-footer">
+                                    <time className="text-xs opacity-50">
+                                      {dayjs(message.createdAt).fromNow()}
+                                    </time>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="chat-header">
-                                Anakin
-                                <time className="text-xs opacity-50">
-                                  12:46
-                                </time>
-                              </div>
-                              <div className="chat-bubble  bg-teal-600 text-white">
-                                I hate you!
-                              </div>
-                              <div className="chat-footer opacity-50">
-                                Seen at 12:46
-                              </div>
-                            </div>
+                              )
+                            )}
+                            <div ref={scrollRef} />
                           </div>
                         </div>
                       </div>
 
                       <div className="p-6 flex gap-5 justify-center items-center px-4">
                         <input
+                          onChange={(e) => setMessage(e.target.value)}
                           type="text"
+                          value={message}
                           placeholder="Type here"
                           className="input w-full input-sm"
                         />
-
-                        <IoSend className="w-6 h-6 text-teal-600" />
+                        <button onClick={handleClick}>
+                          <IoSend className="w-6 h-6 text-teal-600" />
+                        </button>
                       </div>
                     </div>
                   </Dialog.Panel>

@@ -30,9 +30,7 @@ const Navbar = () => {
     }
   };
   const handleClick = (e) => {
-  
-      signOut();
- 
+    signOut();
   };
   useEffect(() => {
     setUser(data);
@@ -40,9 +38,39 @@ const Navbar = () => {
   return (
     <div className="navbar bg-base-100 w-full fixed shadow-lg z-[90]">
       <div className="navbar-start">
-        <div className="lg:flex hidden items-center gap-2">
-          <Chat type={"desktop"} />
-        </div>
+        {data ? (
+          <div className="lg:flex hidden items-center gap-2">
+            <Chat type={"desktop"} />
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-2">
+              <div className="group ">
+                <Link
+                  to={"/signup"}
+                  className="btn btn-ghost btn-sm border-2 border-teal-600 rounded-full group-hover:bg-teal-600 group-hover:text-white flex gap-1  items-center "
+                >
+                  <IoPersonCircle className="w-6 h-6 text-teal-600 group-hover:text-white " />
+                  <span className="normal-case  group-hover:block ">
+                    Sign Up
+                  </span>
+                </Link>
+              </div>
+              <div className="group">
+                <Link
+                  to={"/signin"}
+                  className="btn  btn-ghost btn-sm border-2 border-transparent hover:border-teal-600 bg-teal-600 text-white  rounded-full group-hover:text-teal-600 group-hover:bg-white flex gap-1  items-center "
+                >
+                  <IoLogIn className="w-6 h-6 text-white group-hover:text-teal-600 " />
+                  <span className="normal-case  group-hover:block ">
+                    Sign In
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </>
+        )}
+
         <div className="lg:hidden ">
           <div className="dropdown dropdown-start">
             <label
@@ -86,7 +114,7 @@ const Navbar = () => {
                 </Link>
               </li>
               <li className="rounded-lg w-full group ">
-                <Chat type={"mobile"} />
+                {data && <Chat type={"mobile"} />}
               </li>
             </ul>
           </div>
@@ -121,7 +149,7 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {user ? (
+          {user && (
             <>
               <div className="group">
                 <Link
@@ -167,31 +195,6 @@ const Navbar = () => {
                     </button>
                   </li>
                 </ul>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="group ">
-                <Link
-                  to={"/signup"}
-                  className="btn btn-ghost btn-sm border-2 border-teal-600 rounded-full group-hover:bg-teal-600 group-hover:text-white flex gap-1  items-center "
-                >
-                  <IoPersonCircle className="w-6 h-6 text-teal-600 group-hover:text-white " />
-                  <span className="normal-case  group-hover:block ">
-                    Sign Up
-                  </span>
-                </Link>
-              </div>
-              <div className="group">
-                <Link
-                  to={"/signin"}
-                  className="btn  btn-ghost btn-sm border-2 border-transparent hover:border-teal-600 bg-teal-600 text-white  rounded-full group-hover:text-teal-600 group-hover:bg-white flex gap-1  items-center "
-                >
-                  <IoLogIn className="w-6 h-6 text-white group-hover:text-teal-600 " />
-                  <span className="normal-case  group-hover:block ">
-                    Sign In
-                  </span>
-                </Link>
               </div>
             </>
           )}

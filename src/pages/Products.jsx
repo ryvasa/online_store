@@ -14,9 +14,7 @@ import { IoEyeSharp, IoSearchSharp } from "react-icons/io5";
 import axios from "axios";
 
 const sortOptions = [
-  { name: "Most Popular", href: "#", current: true, value: "" },
-  { name: "Best :Low to High", value: "soldAsc" },
-  { name: "Best :High to Low", value: "soldDesc" },
+  { name: "Top Product", value: "soldDesc" },
   { name: "Price: Low to High", value: "priceAsc" },
   { name: "Price: High to Low", value: "priceDesc" },
 ];
