@@ -11,7 +11,8 @@ import slideRoute from "./routes/slideRoute.js";
 import orderRoute from "./routes/orderRoute.js";
 import categoryPreviewRoute from "./routes/categoryPreviewRoute.js";
 import transactionRoute from "./routes/transactionRoute.js";
-
+import chatRoute from "./routes/chatRoute.js";
+import messageRoute from "./routes/messageRoute.js";
 dotenv.config();
 const app = express();
 
@@ -32,6 +33,8 @@ app.use(slideRoute);
 app.use(orderRoute);
 app.use(transactionRoute);
 app.use(categoryPreviewRoute);
+app.use(chatRoute);
+app.use(messageRoute);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on ${process.env.PORT}`);
