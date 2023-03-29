@@ -6,54 +6,104 @@ import { MdHeadsetMic } from "react-icons/md";
 import { refreshToken } from "../utils/refreshToken";
 import axios from "axios";
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/id";
+import { io } from "socket.io-client";
 
 const Chat = ({ type }) => {
   const data = JSON.parse(localStorage.getItem("user"));
   const [open, setOpen] = useState(false);
   const [chat, setChat] = useState({});
   const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [receivedMessage, setReceivedMessage] = useState([]);
+  const [room, setRoom] = useState(null);
+  const socket = useRef();
+  useEffect(() => {
+    receivedMessage && setMessages((prev) => [...prev, receivedMessage]);
+  }, [receivedMessage]);
+
+  useEffect(() => {
+    socket.current = io("http://localhost:8000");
+  }, []);
+  useEffect(() => {
+    socket.current.on("receive_message", (data) => {
+      setReceivedMessage(data);
+    });
+  }, [socket]);
+  useEffect(() => {
+    if (data.uuid) {
+      setRoom({ id: chat.uuid, user: data.uuid });
+    }
+    if (room !== null && chat.uuid) {
+      joinRoom();
+    }
+  }, [chat]);
+
+  useEffect(() => {
+    refreshToken().then(() => {
+      getChat();
+    });
+  }, []);
   const getChat = async () => {
     try {
       const response = await axios.get("http://localhost:5000/chats/client");
       setChat(response.data);
+      setMessages(response.data.message);
     } catch (error) {
       console.log(error);
     }
   };
   const sendMessage = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/messages", {
-        message,
-        chat_id: chat.uuid,
-      });
-      console.log(response.data);
+      const messageData = {
+        user_id: data.uuid,
+        message: message,
+        user: {
+          img: data.img,
+          name: data.name,
+        },
+        createdAt: Date.now(),
+      };
+      await socket.current.emit("send_message", messageData);
+      await axios
+        .post("http://localhost:5000/messages", {
+          message,
+          chat_id: chat.uuid,
+        })
+        .then(() => {
+          setMessage("");
+        });
+
+      setMessages((message) => [...message, messageData]);
     } catch (error) {
       console.log(error);
     }
   };
-  useEffect(() => {
-    if (open === true) {
-      refreshToken().then(() => {
-        getChat();
-      });
-    }
-  }, [open]);
-  dayjs.extend(relativeTime);
   const handleClick = (e) => {
     refreshToken().then(() => {
-      sendMessage().then(() => {
-        setMessage("");
-        getChat();
-      });
+      sendMessage();
     });
   };
-
   const scrollRef = useRef(null);
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat]);
-
+  }, [messages]);
+  const joinRoom = () => {
+    if (data.name !== "" && room !== null) {
+      socket.current.emit("join_room", room);
+    }
+  };
+  const currentDate = dayjs();
+  const time = (createdAt) => {
+    const createdDate = dayjs(createdAt);
+    if (currentDate.diff(createdDate, "day") < 1) {
+      const formattedTime = createdDate.format("HH:mm");
+      return formattedTime;
+    } else {
+      const formattedDate = createdDate.format("DD MMMM YYYY");
+      return formattedDate;
+    }
+  };
   return (
     <>
       <div className="group">
@@ -124,7 +174,7 @@ const Chat = ({ type }) => {
 
                         <div className="mt-3 h-full p-3">
                           <div className="flow-root">
-                            {chat.message?.map((message) =>
+                            {messages.map((message) =>
                               data.uuid === message.user_id ? (
                                 <div className="chat chat-end">
                                   <div className="chat-image avatar">
@@ -146,7 +196,7 @@ const Chat = ({ type }) => {
                                   </div>
                                   <div className="chat-footer">
                                     <time className="text-xs opacity-50">
-                                      {dayjs(message.createdAt).fromNow()}
+                                      {time(message.createdAt)}
                                     </time>
                                   </div>
                                 </div>
@@ -171,7 +221,7 @@ const Chat = ({ type }) => {
                                   </div>
                                   <div className="chat-footer">
                                     <time className="text-xs opacity-50">
-                                      {dayjs(message.createdAt).fromNow()}
+                                      {time(message.createdAt)}
                                     </time>
                                   </div>
                                 </div>
@@ -189,6 +239,9 @@ const Chat = ({ type }) => {
                           value={message}
                           placeholder="Type here"
                           className="input w-full input-sm"
+                          onKeyPress={(event) => {
+                            event.key === "Enter" && sendMessage();
+                          }}
                         />
                         <button onClick={handleClick}>
                           <IoSend className="w-6 h-6 text-teal-600" />

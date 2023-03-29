@@ -2,13 +2,11 @@ import {
   IoBagHandle,
   IoLogOut,
   IoPersonCircle,
-  IoSearchSharp,
   IoStorefrontSharp,
   IoHome,
   IoLogIn,
 } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import { refreshToken } from "../utils/refreshToken";
 import Cart from "./Cart";
 import Chat from "./Chat";
 import axios from "axios";
@@ -35,6 +33,7 @@ const Navbar = () => {
   useEffect(() => {
     setUser(data);
   }, []);
+  console.log(data);
   return (
     <div className="navbar bg-base-100 w-full fixed shadow-lg z-[90]">
       <div className="navbar-start">
