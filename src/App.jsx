@@ -10,7 +10,6 @@ import EditProfile from "./pages/EditProfile";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import axios from "axios";
-import Ex from "./pages/Ex";
 
 axios.defaults.withCredentials = true;
 
@@ -18,7 +17,6 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/ex" element={<Ex />} />
         <Route path="/" element={<Home />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
